@@ -102,4 +102,5 @@ A: 会！Server Plugin 在 Node.js 后台运行。关闭期间的触发事件会
 
 ## 📄 License
 
-MIT
+CC BY-NC-SA 4.0
+
