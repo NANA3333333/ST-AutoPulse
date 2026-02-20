@@ -1,0 +1,12 @@
+{
+    "display_name": "ST-AutoPulse",
+    "loading_order": 100,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "AutoPulse Dev",
+    "version": "1.0.0",
+    "homePage": "https://github.com/user/ST-AutoPulse",
+    "auto_update": true
+}

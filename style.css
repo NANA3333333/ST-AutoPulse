@@ -1,0 +1,195 @@
+/* ─── ST-AutoPulse Extension Styles ──────────────────────────────── */
+
+#autopulse_settings .inline-drawer-content {
+    padding: 8px 0;
+}
+
+/* Status indicator */
+.autopulse-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.1));
+    margin-bottom: 4px;
+    font-size: 0.85em;
+}
+
+.autopulse-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #888;
+    flex-shrink: 0;
+    transition: background 0.3s ease;
+}
+
+.autopulse-status-dot.connected {
+    background: #4caf50;
+    animation: autopulse-breathe 2s ease-in-out infinite;
+}
+
+.autopulse-status-dot.disconnected {
+    background: #f44336;
+}
+
+@keyframes autopulse-breathe {
+    0%, 100% { opacity: 1; box-shadow: 0 0 4px #4caf50; }
+    50% { opacity: 0.5; box-shadow: 0 0 8px #4caf50; }
+}
+
+/* Row layout */
+.autopulse-row {
+    margin: 6px 0;
+}
+
+.autopulse-row label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.autopulse-hint {
+    opacity: 0.6;
+    font-size: 0.85em;
+}
+
+/* Interval slider + input combo */
+.autopulse-interval-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.autopulse-interval-control input[type="range"] {
+    flex: 1;
+}
+
+.autopulse-number-input {
+    width: 60px !important;
+    text-align: center;
+}
+
+/* Textarea */
+.autopulse-textarea {
+    width: 100%;
+    resize: vertical;
+    min-height: 50px;
+    font-size: 0.9em;
+}
+
+/* Section header */
+.autopulse-section-header {
+    margin: 4px 0;
+}
+
+/* Task list */
+.autopulse-tasks-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 6px 0;
+}
+
+.autopulse-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px;
+    opacity: 0.5;
+    font-size: 0.9em;
+}
+
+.autopulse-empty-state .fa-calendar-xmark {
+    font-size: 1.5em;
+}
+
+/* Individual task item */
+.autopulse-task-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin: 4px 0;
+    border-radius: 6px;
+    background: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.05));
+    transition: background 0.2s ease;
+}
+
+.autopulse-task-item:hover {
+    background: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.1));
+}
+
+.autopulse-task-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.autopulse-task-name {
+    font-weight: 600;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.autopulse-task-schedule {
+    font-size: 0.75em;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+.autopulse-task-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.autopulse-task-actions .menu_button {
+    padding: 4px 6px;
+    font-size: 0.85em;
+}
+
+/* Add task form */
+.autopulse-add-task {
+    padding: 8px;
+    border-radius: 6px;
+    background: var(--SmartThemeBlurTintColor, rgba(0,0,0,0.03));
+    margin-top: 6px;
+}
+
+.autopulse-task-time-row {
+    display: flex;
+    gap: 8px;
+}
+
+.autopulse-task-time-row > * {
+    flex: 1;
+}
+
+/* Timer info */
+#autopulse_timer_info {
+    padding: 4px 10px;
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+
+#autopulse_timer_info .fa-clock {
+    margin-right: 4px;
+}
+
+/* Notification badge for queued messages */
+.autopulse-queue-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: #ff5722;
+    color: white;
+    font-size: 0.7em;
+    font-weight: bold;
+    margin-left: 6px;
+}
