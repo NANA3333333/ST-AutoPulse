@@ -614,7 +614,6 @@ async function generateJealousyMessage(characterId) {
         toastr.info(`${character.name} 看起来有点嫉妒...`, 'AutoPulse 💢', { timeOut: 5000 });
 
         // Desktop notification
-        const settings = getSettings();
         if (settings.notifyDesktop) {
             sendDesktopNotification(character.name, messageText);
         }
@@ -741,7 +740,13 @@ async function resetServerTimer() {
 function updateNextTriggerTime() {
     const settings = getSettings();
     if (settings.enabled) {
-        nextTriggerTime = Date.now() + (settings.intervalMinutes * 60 * 1000);
+        let intervalMs = settings.intervalMinutes * 60 * 1000;
+        // Apply pressure multiplier so the countdown matches actual timer interval
+        if (settings.pressureEnabled) {
+            const multiplier = PRESSURE_MULTIPLIERS[Math.min(pressureLevel, PRESSURE_MULTIPLIERS.length - 1)] || 1.0;
+            intervalMs = Math.max(60000, Math.round(intervalMs * multiplier));
+        }
+        nextTriggerTime = Date.now() + intervalMs;
         startCountdown();
     } else {
         nextTriggerTime = null;
@@ -1347,15 +1352,23 @@ function startFallbackTimer() {
     const settings = getSettings();
     if (!settings.enabled) return;
 
-    const intervalMs = settings.intervalMinutes * 60 * 1000;
+    let intervalMs = settings.intervalMinutes * 60 * 1000;
+
+    // Apply pressure multiplier in fallback mode too
+    if (settings.pressureEnabled) {
+        const multiplier = PRESSURE_MULTIPLIERS[Math.min(pressureLevel, PRESSURE_MULTIPLIERS.length - 1)] || 1.0;
+        intervalMs = Math.max(60000, Math.round(intervalMs * multiplier));
+    }
+
+    const actualMinutes = Math.round(intervalMs / 60000);
 
     fallbackTimerInterval = setInterval(() => {
-        console.log('[AutoPulse] Fallback timer fired!');
-        handleTrigger(settings.prompt, `定时消息 (前端模式, 每${settings.intervalMinutes}分钟)`);
+        console.log(`[AutoPulse] Fallback timer fired! (pressure: ${pressureLevel})`);
+        handleTrigger(settings.prompt, `定时消息 (前端模式, 基础${settings.intervalMinutes}分, 压力${pressureLevel})`);
     }, intervalMs);
 
     updateNextTriggerTime();
-    console.log(`[AutoPulse] Fallback timer started, interval: ${settings.intervalMinutes} min`);
+    console.log(`[AutoPulse] Fallback timer started, base: ${settings.intervalMinutes}min, pressure: ${pressureLevel}, actual: ${actualMinutes}min`);
 }
 
 function stopFallbackTimer() {
