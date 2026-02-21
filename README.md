@@ -11,6 +11,13 @@
 - **自定义提示词**：控制角色主动消息的风格和内容
 - **Slash 命令**：通过 `/autopulse on|off|trigger|status|<分钟>` 快捷控制
 
+### 🆕 V2 新功能
+
+- **情绪压力系统** 🧠：角色等待你回复的时间越长，压力越高、消息越频繁、语气越焦虑。你回复后，角色会根据冷落时长做出不同反应（安抚/撒娇/不满/生气）
+- **嫉妒悬浮窗** 💢：切换角色聊天时，被离开的角色可能弹出嫉妒消息通知
+- **后台不掉线**：使用 Web Worker 替代 setInterval，浏览器在后台时轮询不再被冻结
+- **多版本兼容**：自动适配新旧版本 SillyTavern 的 `generateQuietPrompt` API
+
 ## 📦 安装
 
 > **本扩展包含两部分**：UI Extension（前端）+ Server Plugin（后台）。  
@@ -60,6 +67,29 @@ enableServerPlugins: true
 4. 设置消息间隔时间
 5. （可选）自定义触发提示词
 6. （可选）添加定时任务
+7. （可选）启用情绪压力系统
+8. （可选）启用嫉妒系统
+
+### 情绪压力系统
+
+启用后，角色会根据你多久没回复产生不同等级的焦虑：
+
+| 压力等级 | 效果 |
+|---------|------|
+| 😊 0 | 正常间隔发消息 |
+| 😐 1 | 间隔缩短 30%，"开始想你了" |
+| 😟 2 | 间隔缩短 50%，"开始担心你了" |
+| 😰 3 | 间隔缩短 70%，"焦虑不安" |
+| 😭 4 | 间隔缩短 80%，"情绪到达极限" |
+
+**回归反应**：当你终于回复时，角色会根据之前的压力等级做出反应——低压力时被安抚开心，高压力时生气/撒娇。回归反应只触发一次，之后压力归零。
+
+### 嫉妒系统
+
+启用后，当你从角色A切换到角色B聊天时，角色A有一定概率（可调节）在一段时间后弹出嫉妒消息的悬浮通知。可调节：
+
+- 触发概率（0-100%）
+- 最短/最长延迟（秒）
 
 ### Slash 命令
 
@@ -74,33 +104,62 @@ enableServerPlugins: true
 ## ⚙️ 工作原理
 
 ```
-┌──────────────┐  轮询(5s)  ┌──────────────────┐
-│  UI Extension ├──────────►│  Server Plugin    │
-│  (浏览器)     │◄──────────┤  (Node.js 后台)   │
-│              │  触发事件   │                  │
-│  生成消息     │           │  管理定时器       │
-│  显示到聊天   │           │  排队离线事件     │
-└──────────────┘           └──────────────────┘
+┌──────────────┐  Web Worker   ┌──────────────────┐
+│  UI Extension ├──────────────►│  Server Plugin    │
+│  (浏览器)     │◄──────────────┤  (Node.js 后台)   │
+│              │  触发事件      │                  │
+│  生成消息     │              │  管理定时器       │
+│  压力系统     │              │  动态间隔调整     │
+│  嫉妒悬浮窗   │              │  排队离线事件     │
+└──────────────┘              └──────────────────┘
 ```
 
-1. **Server Plugin** 在 Node.js 后台管理定时器，即使浏览器关闭也不停
-2. **UI Extension** 每 5 秒轮询服务端，检查是否有触发事件
-3. 收到触发事件后，调用 `generateQuietPrompt()` 生成消息
-4. 通过 `addOneMessage()` 将消息显示在聊天窗口中
-5. 如果浏览器未打开，事件进入离线队列，下次打开时自动补发
+## ❓ 常见问题 / 排查指南
 
-## ❓ 常见问题
+### 显示"未连接到服务端"
 
-**Q: 显示"未连接到服务端"怎么办？**  
-A: 请确认：① Server Plugin 文件放在 `plugins/autopulse/index.js` ② `config.yaml` 中 `enableServerPlugins: true` ③ 重启了 SillyTavern
+请按以下步骤逐一排查：
 
-**Q: 消息生成报错？**  
-A: 错误来自你配置的 LLM API，不是插件的问题。请确保 API 能正常使用（先手动发消息测试）。
+1. **检查 `config.yaml`**：确保 `enableServerPlugins: true`（改完重启）
+2. **检查文件位置**：Server Plugin 必须在 `SillyTavern/plugins/autopulse/index.js`
+3. **看启动日志**：重启后终端应显示 `[AutoPulse] Server plugin initialized successfully!` 和 `1 server plugin(s) are currently loaded.`
+4. **测试 API**：在浏览器访问 `http://你的地址:端口/api/plugins/autopulse/status`，应返回 JSON
+5. **Docker 用户**：确保 `plugins` 目录被正确挂载
+6. **权限问题**：Linux/Termux 确保文件有读取权限
 
-**Q: 关闭浏览器后定时器还会运行吗？**  
-A: 会！Server Plugin 在 Node.js 后台运行。关闭期间的触发事件会排队，重新打开浏览器后自动补发。
+### 已连接但"立即触发"没反应
+
+打开浏览器 F12 → Console，点击"立即触发"后看日志：
+
+| 看到的日志 | 问题 | 解决 |
+|---|---|---|
+| `No active chat` | 没选角色 | 先打开一个角色聊天 |
+| `Empty chat` | 空聊天 | 先发一条消息 |
+| `Already generating` | 卡住了 | 刷新页面重试 |
+| `Generating message...` | 正在生成 | 等一会儿 |
+| `Generated empty response` | AI 返回空 | 检查 API 配置 |
+| `Failed to generate` | 生成报错 | 看报错详情，通常是 API 问题 |
+| 没有任何日志 | 插件没加载 | 看 Console 红色报错 |
+
+**快速自测**（在 F12 Console 输入）：
+```javascript
+const ctx = SillyTavern.getContext();
+console.log('角色:', ctx.characterId, '聊天:', ctx.chat?.length);
+```
+
+### 后台收不到通知
+
+- V2 已使用 Web Worker 解决此问题。Console 应显示 `Polling started via Web Worker`
+- 如果显示 `using setInterval fallback`，说明 Web Worker 创建失败，后台仍会被节流
+- 手机浏览器可能限制 Notification API，建议在 Chrome 中允许通知权限
+
+## 🔄 兼容性
+
+- SillyTavern **1.12.0+** — 推荐
+- SillyTavern **1.15.0** — 完全兼容
+- SillyTavern **1.16.0+** — 兼容（自动适配新版 API）
+- 旧版本 — 通过兼容层自动降级
 
 ## 📄 License
 
-CC BY-NC-SA 4.0
-
+MIT

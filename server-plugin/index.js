@@ -105,6 +105,8 @@ function broadcastOrQueue(eventType, data) {
  * @param {string} id Timer ID
  * @param {object} config Timer configuration
  */
+const DEFAULT_PRESSURE_MULTIPLIERS = [1.0, 0.7, 0.5, 0.3, 0.2];
+
 function startTimer(id, config) {
     // Clear existing timer if any
     if (activeTimers.has(id)) {
@@ -117,19 +119,26 @@ function startTimer(id, config) {
         return;
     }
 
-    const intervalMs = (config.intervalMinutes || 30) * 60 * 1000;
+    // Apply pressure multiplier for dynamic intervals
+    const baseMinutes = config.intervalMinutes || 30;
+    const pressureLevel = config.pressureLevel || 0;
+    const multipliers = config.pressureMultipliers || DEFAULT_PRESSURE_MULTIPLIERS;
+    const multiplier = multipliers[Math.min(pressureLevel, multipliers.length - 1)] || 1.0;
+    const actualMinutes = Math.max(1, Math.round(baseMinutes * multiplier));
+    const intervalMs = actualMinutes * 60 * 1000;
 
     const timer = setInterval(() => {
-        console.log(`[AutoPulse] Timer "${id}" fired!`);
+        console.log(`[AutoPulse] Timer "${id}" fired! (pressure: ${pressureLevel}, interval: ${actualMinutes}min)`);
         broadcastOrQueue('timer_trigger', {
             timerId: id,
             prompt: config.prompt || '',
-            intervalMinutes: config.intervalMinutes,
+            intervalMinutes: actualMinutes,
+            pressureLevel: pressureLevel,
         });
     }, intervalMs);
 
     activeTimers.set(id, timer);
-    console.log(`[AutoPulse] Timer "${id}" started, interval: ${config.intervalMinutes} min`);
+    console.log(`[AutoPulse] Timer "${id}" started, base: ${baseMinutes}min, pressure: ${pressureLevel}, actual: ${actualMinutes}min`);
 }
 
 /**
@@ -290,6 +299,8 @@ async function init(router) {
             intervalMinutes: Number(intervalMinutes) || 30,
             prompt: prompt || '',
             enabled: enabled !== false,
+            pressureLevel: Number(req.body.pressureLevel) || 0,
+            pressureMultipliers: req.body.pressureMultipliers || null,
             updatedAt: Date.now(),
         };
         saveData(data);
