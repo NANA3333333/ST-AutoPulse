@@ -1,5 +1,6 @@
 # ST-AutoPulse
 
+中文说明 | [English Documentation](README_EN.md)
 让 SillyTavern 中的角色能够**主动**向你发送消息的扩展。
 
 ## ✨ 功能

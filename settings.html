@@ -9,7 +9,7 @@
             <!-- Connection Status -->
             <div id="autopulse_connection_status" class="autopulse-status">
                 <span class="autopulse-status-dot" id="autopulse_status_dot"></span>
-                <span id="autopulse_status_text">未连接到服务端</span>
+                <span id="autopulse_status_text">未连接 / Not Connected</span>
             </div>
 
             <hr />
@@ -18,14 +18,14 @@
             <div class="autopulse-row">
                 <label class="checkbox_label" for="autopulse_enabled">
                     <input type="checkbox" id="autopulse_enabled" />
-                    <span data-i18n="启用自动消息">启用自动消息</span>
+                    <span data-i18n="启用自动消息">启用自动消息 / Enable Auto Messages</span>
                 </label>
             </div>
 
             <!-- Interval Setting -->
             <div class="autopulse-row">
                 <label for="autopulse_interval">
-                    <span data-i18n="消息间隔（分钟）">消息间隔（分钟）</span>
+                    <span data-i18n="消息间隔（分钟）">消息间隔 / Interval (min)</span>
                 </label>
                 <div class="autopulse-interval-control">
                     <input type="range" id="autopulse_interval_range" min="1" max="180" value="30" />
@@ -47,8 +47,8 @@
             <!-- Custom Prompt -->
             <div class="autopulse-row">
                 <label for="autopulse_prompt">
-                    <span data-i18n="自定义触发提示词">自定义触发提示词</span>
-                    <small class="autopulse-hint">（留空使用默认提示词）</small>
+                    <span data-i18n="自定义触发提示词">自定义提示词 / Custom Prompt</span>
+                    <small class="autopulse-hint">（留空使用默认 / Leave empty for default）</small>
                 </label>
                 <textarea id="autopulse_prompt" class="text_pole autopulse-textarea" rows="3"
                     placeholder="例如：一段时间过去了，角色想要主动联系用户。根据当前对话上下文和角色性格，生成一条自然的主动消息。"></textarea>
@@ -60,7 +60,7 @@
             <div class="autopulse-row">
                 <label class="checkbox_label" for="autopulse_notify">
                     <input type="checkbox" id="autopulse_notify" />
-                    <span data-i18n="桌面通知">桌面通知</span>
+                    <span data-i18n="桌面通知">桌面通知 / Desktop Notifications</span>
                 </label>
             </div>
 
@@ -68,7 +68,7 @@
             <div class="autopulse-row">
                 <div id="autopulse_trigger_now" class="menu_button menu_button_icon">
                     <span class="fa-solid fa-bolt"></span>
-                    <span data-i18n="立即触发一次">立即触发一次</span>
+                    <span data-i18n="立即触发一次">立即触发 / Trigger Now</span>
                 </div>
             </div>
 
@@ -76,14 +76,14 @@
 
             <!-- Scheduled Tasks Section -->
             <div class="autopulse-section-header">
-                <b data-i18n="定时任务">定时任务</b>
+                <b data-i18n="定时任务">定时任务 / Scheduled Tasks</b>
             </div>
 
             <div id="autopulse_tasks_list" class="autopulse-tasks-list">
                 <!-- Tasks will be dynamically populated -->
                 <div class="autopulse-empty-state" id="autopulse_no_tasks">
                     <span class="fa-regular fa-calendar-xmark"></span>
-                    <span data-i18n="暂无定时任务">暂无定时任务</span>
+                    <span data-i18n="暂无定时任务">暂无任务 / No Tasks</span>
                 </div>
             </div>
 
@@ -95,20 +95,20 @@
                 <div class="autopulse-row autopulse-task-time-row">
                     <input type="time" id="autopulse_task_time" class="text_pole" value="09:00" />
                     <select id="autopulse_task_repeat" class="text_pole">
-                        <option value="daily">每天</option>
-                        <option value="weekly">每周</option>
-                        <option value="once">一次性</option>
+                        <option value="daily">每天 / Daily</option>
+                        <option value="weekly">每周 / Weekly</option>
+                        <option value="once">一次性 / Once</option>
                     </select>
                 </div>
                 <div class="autopulse-row" id="autopulse_weekday_row" style="display:none;">
                     <select id="autopulse_task_weekday" class="text_pole">
-                        <option value="1">周一</option>
-                        <option value="2">周二</option>
-                        <option value="3">周三</option>
-                        <option value="4">周四</option>
-                        <option value="5">周五</option>
-                        <option value="6">周六</option>
-                        <option value="0">周日</option>
+                        <option value="1">周一 / Mon</option>
+                        <option value="2">周二 / Tue</option>
+                        <option value="3">周三 / Wed</option>
+                        <option value="4">周四 / Thu</option>
+                        <option value="5">周五 / Fri</option>
+                        <option value="6">周六 / Sat</option>
+                        <option value="0">周日 / Sun</option>
                     </select>
                 </div>
                 <div class="autopulse-row" id="autopulse_date_row" style="display:none;">
@@ -121,7 +121,7 @@
                 <div class="autopulse-row">
                     <div id="autopulse_add_task_btn" class="menu_button menu_button_icon">
                         <span class="fa-solid fa-plus"></span>
-                        <span data-i18n="添加任务">添加任务</span>
+                        <span data-i18n="添加任务">添加任务 / Add Task</span>
                     </div>
                 </div>
             </div>
@@ -130,27 +130,27 @@
 
             <!-- Pressure / Anxiety System -->
             <div class="autopulse-section-header">
-                <b data-i18n="情绪压力系统">情绪压力系统</b>
+                <b data-i18n="情绪压力系统">情绪压力系统 / Emotional Pressure</b>
             </div>
 
             <div class="autopulse-row">
                 <label class="checkbox_label" for="autopulse_pressure_enabled">
                     <input type="checkbox" id="autopulse_pressure_enabled" />
-                    <span data-i18n="启用压力系统">启用压力系统</span>
+                    <span data-i18n="启用压力系统">启用压力系统 / Enable Pressure</span>
                 </label>
-                <small class="autopulse-hint">（角色等待越久越焦虑，你回复后会有情绪反应）</small>
+                <small class="autopulse-hint">（角色等待越久越焦虑 / Character gets anxious the longer you're away）</small>
             </div>
 
             <div class="autopulse-row">
                 <label>
-                    <span>当前压力等级：</span>
+                    <span>当前压力等级 / Current Level：</span>
                     <span id="autopulse_pressure_display" class="autopulse-pressure-indicator">😊 等级 0</span>
                 </label>
             </div>
 
             <div class="autopulse-row">
                 <label for="autopulse_pressure_max">
-                    <span>最大压力等级</span>
+                    <span>最大压力等级 / Max Level</span>
                     <span id="autopulse_pressure_max_display" class="autopulse-value-display">4</span>
                 </label>
                 <input type="range" id="autopulse_pressure_max" min="1" max="5" value="4" />
@@ -159,23 +159,23 @@
             <div class="autopulse-row">
                 <label class="checkbox_label" for="autopulse_pressure_return">
                     <input type="checkbox" id="autopulse_pressure_return" checked />
-                    <span data-i18n="启用回归反应">启用回归反应</span>
+                    <span data-i18n="启用回归反应">启用回归反应 / Return Reaction</span>
                 </label>
-                <small class="autopulse-hint">（你回复后角色根据冷落时长表现被安抚/不满/生气）</small>
+                <small class="autopulse-hint">（回复后角色会做出反应 / Character reacts when you return）</small>
             </div>
 
             <div class="autopulse-row autopulse-test-buttons">
                 <div id="autopulse_test_pressure_up" class="menu_button menu_button_icon" title="模拟压力升级">
                     <span class="fa-solid fa-arrow-up"></span>
-                    <span>压力+1</span>
+                    <span>压力+1 / Pressure+1</span>
                 </div>
                 <div id="autopulse_test_pressure_trigger" class="menu_button menu_button_icon" title="以当前压力等级触发一次消息">
                     <span class="fa-solid fa-bolt"></span>
-                    <span>测试触发</span>
+                    <span>测试触发 / Test Fire</span>
                 </div>
                 <div id="autopulse_test_return" class="menu_button menu_button_icon" title="模拟回归反应">
                     <span class="fa-solid fa-heart"></span>
-                    <span>测试回归</span>
+                    <span>测试回归 / Test Return</span>
                 </div>
             </div>
 
@@ -183,21 +183,21 @@
 
             <!-- Jealousy System -->
             <div class="autopulse-section-header">
-                <b data-i18n="嫉妒系统">嫉妒系统 💢</b>
+                <b data-i18n="嫉妒系统">嫉妒系统 / Jealousy System 💢</b>
             </div>
 
             <div class="autopulse-row">
                 <label class="checkbox_label" for="autopulse_jealousy_enabled">
                     <input type="checkbox" id="autopulse_jealousy_enabled" />
-                    <span data-i18n="启用嫉妒系统">启用嫉妒系统</span>
+                    <span data-i18n="启用嫉妒系统">启用嫉妒系统 / Enable Jealousy</span>
                 </label>
-                <small class="autopulse-hint">（切换角色时，被离开的角色可能嫉妒弹窗）</small>
+                <small class="autopulse-hint">（切换角色时触发 / Triggers when switching characters）</small>
             </div>
 
             <div class="autopulse-row">
                 <label>
-                    <span>选择会嫉妒的角色：</span>
-                    <small class="autopulse-hint">（不选=不会触发嫉妒）</small>
+                    <span>嫉妒角色 / Jealous Characters：</span>
+                    <small class="autopulse-hint">（不选=不触发 / None = disabled）</small>
                 </label>
                 <div id="autopulse_jealousy_chars" class="autopulse-char-picker">
                     <span class="autopulse-hint">加载中...</span>
@@ -206,8 +206,8 @@
 
             <div class="autopulse-row">
                 <label for="autopulse_jealousy_prompt">
-                    <span>自定义嫉妒提示词</span>
-                    <small class="autopulse-hint">（留空使用默认）</small>
+                    <span>嫉妒提示词 / Jealousy Prompt</span>
+                    <small class="autopulse-hint">（留空使用默认 / Leave empty for default）</small>
                 </label>
                 <textarea id="autopulse_jealousy_prompt" class="text_pole textarea_compact" rows="3"
                     placeholder="留空=默认。示例：你发现对方在和别人聊天了，用1句话表达嫉妒，像发微信一样简短。"></textarea>
@@ -215,7 +215,7 @@
 
             <div class="autopulse-row">
                 <label for="autopulse_jealousy_chance">
-                    <span>嫉妒触发概率</span>
+                    <span>嫉妒概率 / Trigger Chance</span>
                     <span id="autopulse_jealousy_chance_display" class="autopulse-value-display">50%</span>
                 </label>
                 <input type="range" id="autopulse_jealousy_chance" min="0" max="100" value="50" />
@@ -223,7 +223,7 @@
 
             <div class="autopulse-row">
                 <label for="autopulse_jealousy_delay_min">
-                    <span>最短延迟（秒）</span>
+                    <span>最短延迟 / Min Delay (s)</span>
                     <span id="autopulse_jealousy_delay_min_display" class="autopulse-value-display">30s</span>
                 </label>
                 <input type="range" id="autopulse_jealousy_delay_min" min="5" max="300" value="30" />
@@ -231,7 +231,7 @@
 
             <div class="autopulse-row">
                 <label for="autopulse_jealousy_delay_max">
-                    <span>最长延迟（秒）</span>
+                    <span>最长延迟 / Max Delay (s)</span>
                     <span id="autopulse_jealousy_delay_max_display" class="autopulse-value-display">120s</span>
                 </label>
                 <input type="range" id="autopulse_jealousy_delay_max" min="10" max="600" value="120" />
@@ -240,7 +240,7 @@
             <div class="autopulse-row">
                 <div id="autopulse_test_jealousy" class="menu_button menu_button_icon" title="立即触发当前角色的嫉妒消息">
                     <span class="fa-solid fa-fire"></span>
-                    <span>测试嫉妒弹窗</span>
+                    <span>测试嫉妒 / Test Jealousy</span>
                 </div>
             </div>
 

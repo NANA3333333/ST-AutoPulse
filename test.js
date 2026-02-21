@@ -1,0 +1,1 @@
+module.exports = { info: { id: 'test' }, init: () => {}, exit: () => {} }
