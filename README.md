@@ -168,3 +168,4 @@ console.log('角色:', ctx.characterId, '聊天:', ctx.chat?.length);
 
 CC BY-NC-SA 4.0
 
+
