@@ -19,6 +19,11 @@
 - **后台不掉线**：使用 Web Worker 替代 setInterval，浏览器在后台时轮询不再被冻结
 - **多版本兼容**：自动适配新旧版本 SillyTavern 的 `generateQuietPrompt` API
 
+### 🐛 V2 近期修复 (Bug Fixes)
+- **修复手机端/不支持的浏览器弹窗崩溃**：捕获了 `Notification` API 的 `Illegal constructor` 错误，现在即使不支持也会回退到安全的网页端浮动提示，不再导致插件崩溃。
+- **修复刚进酒馆时的“幽灵消息”**：修复了在未打开具体角色聊天界面时，离线队列被错误清空（吞消息）的问题。现在离线消息会等到你点进角色卡后才释放。
+- **过滤推理模型思维链**：为嫉妒消息的生成添加了针对 `<think>...</think>` 标签的过滤，防止如 DeepSeek-R1 等带有思维链功能的新模型在弹窗中暴露思考过程。
+
 ## 📦 安装 (及 V2 升级须知)
 
 > **本扩展包含两部分**：UI Extension（前端）+ Server Plugin（后台）。  
@@ -165,3 +170,6 @@ console.log('角色:', ctx.characterId, '聊天:', ctx.chat?.length);
 - SillyTavern **1.16.0+** — 兼容（自动适配新版 API）
 - 旧版本 — 通过兼容层自动降级
 
+## 📄 License
+
+MIT

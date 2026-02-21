@@ -200,6 +200,12 @@ async function checkServerConnection() {
  */
 async function pollForEvents() {
     try {
+        const ctx = SillyTavern.getContext();
+        // Pause polling if no active chat to prevent consuming and losing events
+        if (!ctx.characterId && !ctx.groupId) {
+            return;
+        }
+
         const response = await pluginRequest('/pending');
 
         if (!isConnected) {
@@ -467,11 +473,15 @@ function sendDesktopNotification(characterName, message) {
     if (!('Notification' in window)) return;
 
     if (Notification.permission === 'granted') {
-        new Notification(`${characterName} 发来了消息`, {
-            body: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
-            icon: '/favicon.ico',
-            tag: 'autopulse',
-        });
+        try {
+            new Notification(`${characterName} 发来了消息`, {
+                body: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
+                icon: '/favicon.ico',
+                tag: 'autopulse',
+            });
+        } catch (e) {
+            console.warn('[AutoPulse] Failed to show desktop notification (mobile browser?):', e);
+        }
     } else if (Notification.permission !== 'denied') {
         Notification.requestPermission().then(perm => {
             if (perm === 'granted') {
@@ -572,6 +582,7 @@ async function generateJealousyMessage(characterId) {
 
         // Post-process: strip CoT / thinking tags that some presets inject
         let cleaned = result
+            .replace(/<think>[\s\S]*?<\/think>/gi, '')
             .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
             .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
             .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
@@ -680,6 +691,13 @@ function showJealousyPopup(name, avatarUrl, message) {
 
 async function processOfflineQueue() {
     try {
+        const ctx = SillyTavern.getContext();
+        // Pause processing if no active chat
+        if (!ctx.characterId && !ctx.groupId) {
+            console.log('[AutoPulse] No active chat, deferring offline queue processing.');
+            return;
+        }
+
         const queue = await pluginRequest('/queue');
         if (!queue || queue.length === 0) return;
 
@@ -1326,6 +1344,8 @@ async function initExtension() {
 
         if (currentCharId !== undefined) {
             previousCharacterId = currentCharId;
+            // Attempt to process offline queue now that a chat is open
+            setTimeout(() => processOfflineQueue(), 1000);
         } else {
             previousCharacterId = null; // Group chats or no chat selected
         }
