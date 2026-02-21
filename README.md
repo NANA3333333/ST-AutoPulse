@@ -165,6 +165,3 @@ console.log('角色:', ctx.characterId, '聊天:', ctx.chat?.length);
 - SillyTavern **1.16.0+** — 兼容（自动适配新版 API）
 - 旧版本 — 通过兼容层自动降级
 
-## 📄 License
-
-MIT
