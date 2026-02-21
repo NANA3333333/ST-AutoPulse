@@ -374,7 +374,12 @@ async function handleTrigger(customPrompt, source = '自动消息') {
  * Triggered once after user sends a message while pressure > 0.
  */
 async function handleReturnReaction() {
-    if (!pendingReturnReaction || isGenerating) return;
+    if (!pendingReturnReaction) return;
+    if (isGenerating) {
+        // Wait and retry if already generating a message
+        setTimeout(handleReturnReaction, 1000);
+        return;
+    }
 
     const ctx = SillyTavern.getContext();
     const settings = getSettings();
@@ -437,14 +442,23 @@ async function handleReturnReaction() {
  * Update the pressure level display in settings UI.
  */
 function updatePressureDisplay() {
-    const emojis = ['😊', '😐', '😟', '😰', '😭'];
-    const emoji = emojis[Math.min(pressureLevel, emojis.length - 1)];
+    const settings = getSettings();
+    const max = settings.pressureMaxLevel || 4;
+
+    let emoji = '😊';
+    if (pressureLevel >= max) emoji = '💢';
+    else if (pressureLevel >= max - 1) emoji = '😠';
+    else if (pressureLevel >= 2) emoji = '😰';
+    else if (pressureLevel >= 1) emoji = '🥺';
+
     $('#autopulse_pressure_display').text(`${emoji} 等级 ${pressureLevel}`);
 
-    // Update color
-    const colors = ['#4caf50', '#8bc34a', '#ff9800', '#ff5722', '#f44336'];
-    const color = colors[Math.min(pressureLevel, colors.length - 1)];
-    $('#autopulse_pressure_display').css('color', color);
+    // Color logic
+    if (pressureLevel === 0) $('#autopulse_pressure_display').css('color', '');
+    else if (pressureLevel === 1) $('#autopulse_pressure_display').css('color', '#ffb74d'); // Orange
+    else if (pressureLevel === 2) $('#autopulse_pressure_display').css('color', '#ff9800'); // Dark orange
+    else if (pressureLevel === 3) $('#autopulse_pressure_display').css('color', '#f44336'); // Red
+    else $('#autopulse_pressure_display').css('color', '#d32f2f'); // Dark red
 }
 
 // ─── Desktop Notifications ───────────────────────────────────────────
@@ -1301,10 +1315,15 @@ async function initExtension() {
         const currentCharId = ctx.characterId;
 
         // Jealousy: if we switched away from a character, trigger jealousy
-        if (previousCharacterId && previousCharacterId !== currentCharId) {
+        if (previousCharacterId !== null && previousCharacterId !== currentCharId) {
             tryTriggerJealousy(previousCharacterId);
         }
-        previousCharacterId = currentCharId;
+
+        if (currentCharId !== undefined) {
+            previousCharacterId = currentCharId;
+        } else {
+            previousCharacterId = null; // Group chats or no chat selected
+        }
 
         // Reset pressure when switching chats
         pressureLevel = 0;
