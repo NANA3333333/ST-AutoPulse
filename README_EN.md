@@ -86,5 +86,4 @@ If you switch from Character A to Character B, Character A has a chance to send 
 - Trigger Chance (0-100%)
 - Minimum and Maximum Delay (in seconds)
 
-## 📄 License
-MIT
+
