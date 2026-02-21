@@ -166,4 +166,5 @@ console.log('角色:', ctx.characterId, '聊天:', ctx.chat?.length);
 
 ## 📄 License
 
-MIT
+CC BY-NC-SA 4.0
+
