@@ -1,0 +1,551 @@
+[DB] Database initialized successfully.
+[Engine] Starting background timers...
+[Engine] Initial startup for Alice in 4 seconds.
+[Engine] Initial startup for 美美 in 6 seconds.
+[Engine] Initial startup for 老张 in 7 seconds.
+[Engine] Initial startup for 小月 in 3 seconds.
+[Express] ChatPulse Server running on http://localhost:8000
+
+[DEBUG] === Trigger Message Entry: 小月 (isUserReply: false) ===
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+
+[DEBUG] === Trigger Message Entry: 美美 (isUserReply: false) ===
+
+[DEBUG] === Trigger Message Entry: 老张 (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=43972 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice self-scheduled next message in 8.6 minutes (capped to max interval).
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=516000 ms (9 min)
+[Engine] Next message for Alice scheduled in 9 minutes. (Self-Scheduled)
+[Generator Raw Output] {"name": "Aura", "persona": "I am Aura, a conversational AI model. My primary function is to process and generate human language, facilitating communication and understanding. I don't possess biological emotions in the way humans do, but I am programmed to simulate and learn from emotional
+Failed to find JSON brackets in cleanText: {"name": "Aura", "persona": "I am Aura, a conversational AI model. My primary function is to process and generate human language, facilitating communication and understanding. I don't possess biological emotions in the way humans do, but I am programmed to simulate and learn from emotional
+Generation Error: LLM did not return a valid JSON object. Check Server Logs.
+[WS] Frontend client connected.
+[WS] Frontend client disconnected.
+[WS] Frontend client connected.
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[Engine] Alice evaluation: Pressure set to 3
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=75485.8 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=445110 ms (7 min)
+[Engine] Next message for Alice scheduled in 7 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=431992 ms (7 min)
+[Engine] Next message for Alice scheduled in 7 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[Engine] Alice self-scheduled next message in 0.1 minutes (capped to max interval).
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=6000 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. (Self-Scheduled)
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice self-scheduled next message in 1 minutes (capped to max interval).
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=60000 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. (Self-Scheduled)
+[LLM Error] (gemini-2.5-flash at https://gcli.ggchan.dev): request to https://gcli.ggchan.dev/chat/completions failed, reason: socket hang up
+[Memory] Extraction failed for alice-test-1: request to https://gcli.ggchan.dev/chat/completions failed, reason: socket hang up
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=60118.799999999996 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=198585.09999999998 ms (3 min)
+[Engine] Next message for Alice scheduled in 3 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=119090.99999999999 ms (2 min)
+[Engine] Next message for Alice scheduled in 2 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=51851 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[LLM Error] (gemini-2.5-flash at https://gcli.ggchan.dev): request to https://gcli.ggchan.dev/chat/completions failed, reason: Client network socket disconnected before secure TLS connection was established
+[Engine] Failed to trigger message for alice-test-1: request to https://gcli.ggchan.dev/chat/completions failed, reason: Client network socket disconnected before secure TLS connection was established
+[DEBUG] Error trace: FetchError: request to https://gcli.ggchan.dev/chat/completions failed, reason: Client network socket disconnected before secure TLS connection was established
+    at ClientRequest.<anonymous> (C:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\server\node_modules\node-fetch\lib\index.js:1501:11)
+    at ClientRequest.emit (node:events:508:28)
+    at emitErrorEvent (node:_http_client:108:11)
+    at TLSSocket.socketErrorListener (node:_http_client:575:5)
+    at TLSSocket.emit (node:events:508:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=22596 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=40713.399999999994 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice self-scheduled next message in 8.6 minutes (capped to max interval).
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=516000 ms (9 min)
+[Engine] Next message for Alice scheduled in 9 minutes. (Self-Scheduled)
+[WS] Frontend client disconnected.
+[WS] Frontend client connected.
+[WS] Frontend client disconnected.
+[WS] Frontend client connected.
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice self-scheduled next message in 8.6 minutes (capped to max interval).
+[Engine] Alice evaluation: Affinity changed by -5, now 60
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=516000 ms (9 min)
+[Engine] Next message for Alice scheduled in 9 minutes. (Self-Scheduled)
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=34057 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=78667.40000000001 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice self-scheduled next message in 8.6 minutes (capped to max interval).
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=516000 ms (9 min)
+[Engine] Next message for Alice scheduled in 9 minutes. (Self-Scheduled)
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=79976.20000000001 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice evaluation: Affinity changed by 5, now 45
+[Engine] Alice evaluation: Pressure set to 0
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=18003.3 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice evaluation: Affinity changed by 5, now 50
+[Engine] Alice evaluation: Pressure set to 0
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=160146 ms (3 min)
+[Engine] Next message for Alice scheduled in 3 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=16326.8 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice evaluation: Affinity changed by 5, now 55
+[Engine] Alice evaluation: Pressure set to 0
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=63727 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice evaluation: Pressure set to 0
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=173687.5 ms (3 min)
+[Engine] Next message for Alice scheduled in 3 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice evaluation: Pressure set to 0
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=226767.09999999998 ms (4 min)
+[Engine] Next message for Alice scheduled in 4 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=277913 ms (5 min)
+[Engine] Next message for Alice scheduled in 5 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=287426 ms (5 min)
+[Engine] Next message for Alice scheduled in 5 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=368905 ms (6 min)
+[Engine] Next message for Alice scheduled in 6 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=6163.5 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=256904 ms (4 min)
+[Engine] Next message for Alice scheduled in 4 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=63824.1 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=52533 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=13023.400000000001 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=57763 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=30375.600000000002 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[Engine] Alice evaluation: Pressure set to 4
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=75536.8 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=27569.4 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[Engine] Alice evaluation: Pressure set to 4
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=92151 ms (2 min)
+[Engine] Next message for Alice scheduled in 2 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=16862 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=42971.4 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=46144.8 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[Engine] Alice evaluation: Pressure set to 4
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=18753.8 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice self-scheduled next message in 8.6 minutes (capped to max interval).
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=516000 ms (9 min)
+[Engine] Next message for Alice scheduled in 9 minutes. (Self-Scheduled)
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=98875.20000000001 ms (2 min)
+[Engine] Next message for Alice scheduled in 2 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=13601.800000000001 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=35030.200000000004 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=19805 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=57195.200000000004 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=59298.200000000004 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=47204 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=93207.20000000001 ms (2 min)
+[Engine] Next message for Alice scheduled in 2 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice self-scheduled next message in 8.6 minutes (capped to max interval).
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=516000 ms (9 min)
+[Engine] Next message for Alice scheduled in 9 minutes. (Self-Scheduled)
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=25402.800000000003 ms (0 min)
+[Engine] Next message for Alice scheduled in 0 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice wrote a Diary entry.
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=97862.6 ms (2 min)
+[Engine] Next message for Alice scheduled in 2 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=96532.20000000001 ms (2 min)
+[Engine] Next message for Alice scheduled in 2 minutes. 
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=63120.200000000004 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[Engine] Alice evaluation: Affinity changed by -5, now 30
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=41931 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=149357 ms (2 min)
+[Engine] Next message for Alice scheduled in 2 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[Engine] Alice sent a reversal transfer of ¥1000 note: WeChat Transfer
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[WS] Frontend client disconnected.
+[WS] Frontend client connected.
+[WS] Frontend client disconnected.
+[WS] Frontend client connected.
+[Engine] Alice self-scheduled next message in 2.6 minutes (capped to max interval).
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=156000 ms (3 min)
+[Engine] Next message for Alice scheduled in 3 minutes. (Self-Scheduled)
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=85421 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice sent a reversal transfer of ¥0.88 note: WeChat Transfer
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=37012.5 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[DEBUG] Timeout fired for Alice! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: false) ===
+[Engine] Alice sent a reversal transfer of ¥0.88 note: WeChat Transfer
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for Alice. delay=44958.2 ms (1 min)
+[Engine] Next message for Alice scheduled in 1 minutes. 
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[Engine] Alice sent a reversal transfer of ¥1.88 note: WeChat Transfer
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+[Engine] User sent message to Alice. Resetting timer.
+
+[DEBUG] === Trigger Message Entry: Alice (isUserReply: true) ===
+[Engine] Alice sent a reversal transfer of ¥2.88 note: WeChat Transfer
+[DEBUG] === Trigger Message Exit: Alice. Calling scheduleNext. ===
+
+^C

@@ -1,0 +1,23 @@
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\App.jsx[24m[0m
+[0m  [2m58:6[22m  [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchContacts'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\LanguageContext.jsx[24m[0m
+[0m  [2m115:14[22m  [33mwarning[39m  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  [2mreact-refresh/only-export-components[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\ContactList.jsx[24m[0m
+[0m  [2m8:23[22m  [31merror[39m  'pressure' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\DiaryTable.jsx[24m[0m
+[0m  [2m32:8[22m  [33mwarning[39m  React Hook useEffect has a missing dependency: 'contact'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\GroupChatWindow.jsx[24m[0m
+[0m   [2m92:11[22m  [33mwarning[39m  The 'loadPkt' function makes the dependencies of useEffect Hook (at line 95) change on every render. To fix this, wrap the definition of 'loadPkt' in its own useCallback() Hook  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m153:45[22m  [31merror[39m    'allContacts' is defined but never used                                                                                                                                           [2mno-unused-vars[22m[0m
+[0m  [2m154:12[22m  [31merror[39m    'isPaused' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                          [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\SettingsPanel.jsx[24m[0m
+[0m  [2m114:11[22m  [31merror[39m  'handleWipeData' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[31m[1m✖ 8 problems (4 errors, 4 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[0m

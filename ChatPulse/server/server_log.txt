@@ -1,0 +1,9 @@
+﻿[DB] Database initialized successfully.
+[Engine] Starting background timers...
+[Engine] Gemini: sys_proactive=OFF, skipping startup message.
+[Express] ChatPulse Server running on http://localhost:8000
+[WS] Frontend client connected.
+[WS] Frontend client disconnected.
+[WS] Frontend client connected.
+[WS] Frontend client disconnected.
+[WS] Frontend client connected.

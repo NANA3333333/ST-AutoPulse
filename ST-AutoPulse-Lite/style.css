@@ -1,0 +1,272 @@
+/* ST-AutoPulse Lite Styles */
+
+.autopulse-settings {
+    padding: 4px 0;
+}
+
+/* Status Bar */
+.autopulse-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--SmartThemeBotMesBlurTintColor, rgba(0, 0, 0, 0.1));
+    margin-bottom: 10px;
+    font-size: 0.9em;
+}
+
+.autopulse-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.autopulse-status-dot.disconnected {
+    background: #9e9e9e;
+}
+
+.autopulse-status-dot.active {
+    background: #4caf50;
+    animation: autopulse-breathe 2s ease-in-out infinite;
+}
+
+@keyframes autopulse-breathe {
+
+    0%,
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 4px #4caf50;
+    }
+
+    50% {
+        opacity: 0.5;
+        box-shadow: 0 0 8px #4caf50;
+    }
+}
+
+/* Setting Groups */
+.autopulse-setting-group {
+    margin: 10px 0;
+}
+
+.autopulse-setting-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.autopulse-setting-group small {
+    font-weight: normal;
+    opacity: 0.7;
+}
+
+/* Interval Row */
+.autopulse-interval-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.autopulse-interval-row input[type="range"] {
+    flex: 1;
+}
+
+.autopulse-interval-num {
+    width: 60px !important;
+    text-align: center;
+}
+
+/* Timer Info */
+.autopulse-timer-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: var(--SmartThemeBotMesBlurTintColor, rgba(0, 0, 0, 0.08));
+    margin: 8px 0;
+    font-size: 0.88em;
+    color: var(--SmartThemeBodyColor, #ccc);
+}
+
+/* Prompt Input */
+.autopulse-prompt-input {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Action Buttons */
+.autopulse-actions {
+    margin: 10px 0;
+}
+
+/* Notice */
+.autopulse-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: var(--SmartThemeBotMesBlurTintColor, rgba(0, 0, 0, 0.06));
+    margin-top: 12px;
+    font-size: 0.85em;
+    opacity: 0.8;
+    line-height: 1.4;
+}
+
+.autopulse-notice .fa-circle-info {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.autopulse-notice a {
+    color: var(--SmartThemeQuoteColor, #4fc3f7);
+    text-decoration: underline;
+}
+
+/* ─── Pressure System ────────────────────────────────────────── */
+
+.autopulse-pressure-indicator {
+    font-weight: 600;
+    font-size: 1em;
+    transition: color 0.3s ease;
+}
+
+/* Character picker for jealousy */
+.autopulse-char-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 4px 0;
+}
+
+.autopulse-char-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 3px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.82em;
+}
+
+.autopulse-char-chip:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.autopulse-char-chip.selected {
+    border-color: rgba(255, 87, 34, 0.6);
+    background: rgba(255, 87, 34, 0.15);
+}
+
+.autopulse-char-chip-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.autopulse-char-chip-name {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ─── Jealousy Floating Window ───────────────────────────────── */
+
+#autopulse_jealousy_container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    pointer-events: none;
+    max-height: 80vh;
+}
+
+.autopulse-jealousy-popup {
+    pointer-events: auto;
+    width: 320px;
+    max-width: 90vw;
+    background: rgba(30, 30, 40, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    color: #eee;
+    animation: autopulse-slide-in 0.4s ease-out;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.autopulse-jealousy-popup.autopulse-jealousy-exit {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+.autopulse-jealousy-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.autopulse-jealousy-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 87, 34, 0.6);
+    flex-shrink: 0;
+}
+
+.autopulse-jealousy-name {
+    font-weight: 700;
+    font-size: 0.95em;
+    flex: 1;
+}
+
+.autopulse-jealousy-close {
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+.autopulse-jealousy-close:hover {
+    opacity: 1;
+}
+
+.autopulse-jealousy-body {
+    font-size: 0.88em;
+    line-height: 1.5;
+    opacity: 0.9;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+@keyframes autopulse-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

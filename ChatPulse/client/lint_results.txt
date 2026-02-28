@@ -1,0 +1,43 @@
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\App.jsx[24m[0m
+[0m   [2m1:38[22m  [31merror[39m    'useRef' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                     [2mno-unused-vars[22m[0m
+[0m  [2m24:10[22m  [31merror[39m    'socket' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                            [2mno-unused-vars[22m[0m
+[0m  [2m58:6[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchContacts'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\LanguageContext.jsx[24m[0m
+[0m  [2m115:14[22m  [33mwarning[39m  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  [2mreact-refresh/only-export-components[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\AddCharacterModal.jsx[24m[0m
+[0m  [2m44:23[22m  [31merror[39m  'lang' is not defined  [2mno-undef[22m[0m
+[0m  [2m48:19[22m  [31merror[39m  'lang' is not defined  [2mno-undef[22m[0m
+[0m  [2m81:19[22m  [31merror[39m  'lang' is not defined  [2mno-undef[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\ChatWindow.jsx[24m[0m
+[0m   [2m44:11[22m  [31merror[39m    'topRef' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                      [2mno-unused-vars[22m[0m
+[0m  [2m109:8[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'contact?.name'. Either include it or remove the dependency array. If 'setMessages' needs the current value of 'contact.name', you can also switch to useReducer instead of useState and read 'contact.name' in the reducer  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\ContactList.jsx[24m[0m
+[0m  [2m8:23[22m  [31merror[39m  'pressure' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\DiaryTable.jsx[24m[0m
+[0m  [2m32:8[22m   [33mwarning[39m  React Hook useEffect has a missing dependency: 'contact'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m52:18[22m  [31merror[39m    'e' is defined but never used                                                                               [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\GroupChatWindow.jsx[24m[0m
+[0m   [2m95:51[22m  [33mwarning[39m  React Hook useEffect has a missing dependency: 'loadPkt'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m  [2m153:45[22m  [31merror[39m    'allContacts' is defined but never used                                                                     [2mno-unused-vars[22m[0m
+[0m  [2m163:11[22m  [31merror[39m    'togglePause' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                 [2mno-unused-vars[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\MemoTable.jsx[24m[0m
+[0m  [2m32:8[22m  [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchMemories'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\MomentsFeed.jsx[24m[0m
+[0m  [2m42:8[22m  [33mwarning[39m  React Hook useEffect has a missing dependency: 'fetchMomentsData'. Either include it or remove the dependency array  [2mreact-hooks/exhaustive-deps[22m[0m
+[0m[0m
+[0m[4mC:\Users\Administrator\.gemini\antigravity\scratch\ChatPulse\client\src\components\SettingsPanel.jsx[24m[0m
+[0m    [2m5:7[22m    [31merror[39m  'getDefaultGuidelines' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  [2mno-unused-vars[22m[0m
+[0m  [2m114:11[22m   [31merror[39m  'handleWipeData' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u        [2mno-unused-vars[22m[0m
+[0m  [2m267:116[22m  [31merror[39m  'defaultGuidelines' is not defined                                                                    [2mno-undef[22m[0m
+[0m[0m
+[0m[31m[1m✖ 20 problems (13 errors, 7 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[0m

@@ -1,0 +1,11 @@
+﻿[DB] Database initialized successfully.
+[Engine] Starting background timers...
+[Engine] Initial startup for Alice in 2 minutes.
+[Engine] Initial startup for 缇庣編 in 1 minutes.
+[Engine] Initial startup for 鑰佸紶 in 3 minutes.
+[Engine] Initial startup for 灏忔湀 in 2 minutes.
+[Express] ChatPulse Server running on http://localhost:8000
+[Engine] Triggering message for 缇庣編 (char-meimei)
+[Engine] Triggering message for Alice (alice-test-1)
+[Engine] Triggering message for 灏忔湀 (char-xiaoyue)
+[Engine] Triggering message for 鑰佸紶 (char-laozhang)

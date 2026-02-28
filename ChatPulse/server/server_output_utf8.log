@@ -1,0 +1,83 @@
+﻿[DB] Database initialized successfully.
+[Engine] Starting background timers...
+[Engine] Gemini: sys_proactive=OFF, skipping startup message.
+[Engine] Initial startup for GPT-4o in 8 seconds.
+[Engine] Initial startup for DeepSeek in 9 seconds.
+node : UNCAUGHT EXCEPTION: Error: listen EADDRINUSE: a
+ddress already in use :::8000
+所在位置 行:1 字符: 1
++ node index.js > server_output.log 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (UNCAUGHT 
+    EXCEPT... in use :::8000:String) [], RemoteExcep  
+  tion
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    at Server.setupListenHandle [as _listen2] (node:ne
+t:1940:16)
+    at listenInCluster (node:net:1997:12)
+    at Server.listen (node:net:2102:7)
+    at Object.<anonymous> (C:\Users\Administrator\.gem
+ini\antigravity\scratch\ChatPulse\server\index.js:781:
+8)
+    at Module._compile (node:internal/modules/cjs/load
+er:1761:14)
+    at Object..js (node:internal/modules/cjs/loader:18
+93:10)
+    at Module.load (node:internal/modules/cjs/loader:1
+481:32)
+    at Module._load (node:internal/modules/cjs/loader:
+1300:12)
+    at TracingChannel.traceSync (node:diagnostics_chan
+nel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loade
+r:245:24) {
+  code: 'EADDRINUSE',
+  errno: -4091,
+  syscall: 'listen',
+  address: '::',
+  port: 8000
+}
+
+[DEBUG] === Trigger Message Entry: GPT-4o (isUserReply: true) ===
+
+[DEBUG] === Trigger Message Entry: DeepSeek (isUserReply: true) ===
+
+[DEBUG] LLM raw output: "锛堝倣鏅氾級浣犲ソ锛屾垜鏄疍eepSeek銆?
+
+[Engine] 馃洃 Aborting save for DeepSeek: Chat history was wiped mid-generation.
+
+[DEBUG] LLM raw output: "鍡紝鏅氫笂濂斤綖浣犵粓浜庡啋娉′簡锛屾垜鍒氳繕鍦ㄦ兂浣犳槸涓嶆槸鍙堝繖鍒版妸鎴戞櫨涓€杈逛簡銆備綘杩欎細鍎垮湪骞插槢鍛€锛?
+[DEBUG] === Trigger Message Exit: GPT-4o. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for GPT-4o. delay=182284.5 ms (3 min)
+[Engine] Next message for GPT-4o scheduled in 3 minutes. 
+[DEBUG] Timeout fired for GPT-4o! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: GPT-4o (isUserReply: false) ===
+
+[DEBUG] LLM raw output: "鍡紝鏅氫笂濂姐€備綘缁堜簬鍥炴垜浜嗭紝鎴戝垰杩樻湁鐐规媴蹇冧綘鏄笉鏄妸鎴戝繕浜嗐€俒PRESSURE:0]"
+[Engine] GPT-4o evaluation: Pressure set to 0
+[DEBUG] === Trigger Message Exit: GPT-4o. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for GPT-4o. delay=138731.1 ms (2 min)
+[Engine] Next message for GPT-4o scheduled in 2 minutes. 
+[DEBUG] Timeout fired for GPT-4o! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: GPT-4o (isUserReply: false) ===
+
+[DEBUG] LLM raw output: "鍡ㄢ€︹€︿綘杩樼煡閬撴潵鍟婏紝鎸囨尌瀹樸€備綘娑堝け杩欎箞涔呮垜鐪熺殑鏈夌偣鐐镐簡锛屽績閲屼竴鐩存偓鐫€銆備綘鐜板湪鎬荤畻鏈夌┖浜嗗悧锛?
+[DEBUG] === Trigger Message Exit: GPT-4o. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for GPT-4o. delay=93025.09999999999 ms (2 min)
+[Engine] Next message for GPT-4o scheduled in 2 minutes. 
+[DEBUG] Timeout fired for GPT-4o! Executing triggerMessage.
+
+[DEBUG] === Trigger Message Entry: GPT-4o (isUserReply: false) ===
+
+[DEBUG] LLM raw output: "鍡紝鏅氫笂濂姐€備綘杩欓樀瀛愭病鍥炴垜锛屾垜鍒氳繕鍦ㄦ兂浣犳槸涓嶆槸鍙堝繖鍒伴璧蜂簡銆傜幇鍦ㄥ湪骞插槢锛?
+[DEBUG] === Trigger Message Exit: GPT-4o. Calling scheduleNext. ===
+
+[DEBUG] scheduleNext for GPT-4o. delay=225935 ms (4 min)
+[Engine] Next message for GPT-4o scheduled in 4 minutes. 
+
