@@ -391,3 +391,110 @@
         transform: translateX(0);
     }
 }
+
+/* ─── ChatPulse Phone UI ───────────────────────────────────────── */
+
+#autopulse_chatpulse_btn {
+    position: fixed;
+    right: 20px;
+    bottom: 80px;
+    /* Above ST native UI */
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
+    /* WeChat/ChatPulse Green */
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(11, 163, 96, 0.4);
+    z-index: 9999;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#autopulse_chatpulse_btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(11, 163, 96, 0.6);
+}
+
+#autopulse_chatpulse_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#autopulse_chatpulse_overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.autopulse-phone-container {
+    width: 400px;
+    height: 850px;
+    max-width: 95vw;
+    max-height: 95vh;
+    background: #111;
+    border-radius: 36px;
+    border: 8px solid #222;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 0 2px #444;
+    transform: translateY(30px);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#autopulse_chatpulse_overlay.visible .autopulse-phone-container {
+    transform: translateY(0);
+}
+
+.autopulse-phone-header {
+    height: 44px;
+    background: #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    color: white;
+    border-bottom: 1px solid #111;
+}
+
+.autopulse-phone-title {
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+}
+
+#autopulse_chatpulse_close {
+    cursor: pointer;
+    padding: 4px;
+    font-size: 20px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+#autopulse_chatpulse_close:hover {
+    opacity: 1;
+    color: #ff5252;
+}
+
+#autopulse_chatpulse_iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: #000;
+}

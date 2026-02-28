@@ -20,13 +20,7 @@ const DEFAULT_SETTINGS = Object.freeze({
     pressureEnabled: false,
     pressureMaxLevel: 4,
     pressureReturnEnabled: true,
-    // Jealousy system
-    jealousyEnabled: false,
-    jealousyChance: 50,
-    jealousyDelayMin: 30,
-    jealousyDelayMax: 120,
-    jealousyCharacters: [], // Array of character IDs that can get jealous (empty = none)
-    jealousyPrompt: '', // Custom jealousy prompt (empty = use default)
+    contextSyncDepth: 10, // How many chat messages to sync to ChatPulse
 });
 
 const DEFAULT_PROMPT = '一段时间过去了。请根据当前的对话上下文、角色性格和背景设定，以角色的身份主动向用户发送一条自然的消息。这条消息应该像是角色在想到用户时自然地发出的，可以是问候、分享日常、表达关心、或延续之前的话题。请保持角色的语气和风格一致。';
@@ -51,8 +45,6 @@ const RETURN_PROMPTS = [
     '（[情绪背景：对方终于回复了，但你很生气被冷落了这么久。你的情绪复杂——想要原谅但又忍不住表达不满。]）\n',
 ];
 
-const JEALOUSY_PROMPT = '[OOC指令：暂时中断当前RP格式。你现在需要发送一条简短的即时消息（像微信/QQ/短信），不是写小说，不是RP。禁止使用动作描写、心理描写、环境描写、括号动作。只输出角色说的话，1-2句以内，口语化，像真人发消息一样。情境：你发现对方在和别人聊天，你感到嫉妒。]\n';
-
 // ─── State Variables ─────────────────────────────────────────────────
 
 let pollingInterval = null;
@@ -70,10 +62,6 @@ let pressureLevel = 0;
 let lastUserMessageTime = Date.now();
 let pendingReturnReaction = false;
 let returnReactionLevel = 0;
-
-// Jealousy system state
-let previousCharacterId = null;
-let jealousyTimeout = null;
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
@@ -200,6 +188,12 @@ async function checkServerConnection() {
  */
 async function pollForEvents() {
     try {
+        const ctx = SillyTavern.getContext();
+        // Pause polling if no active chat to prevent consuming and losing events
+        if (!ctx.characterId && !ctx.groupId) {
+            return;
+        }
+
         const response = await pluginRequest('/pending');
 
         if (!isConnected) {
@@ -374,7 +368,12 @@ async function handleTrigger(customPrompt, source = '自动消息') {
  * Triggered once after user sends a message while pressure > 0.
  */
 async function handleReturnReaction() {
-    if (!pendingReturnReaction || isGenerating) return;
+    if (!pendingReturnReaction) return;
+    if (isGenerating) {
+        // Wait and retry if already generating a message
+        setTimeout(handleReturnReaction, 1000);
+        return;
+    }
 
     const ctx = SillyTavern.getContext();
     const settings = getSettings();
@@ -437,14 +436,23 @@ async function handleReturnReaction() {
  * Update the pressure level display in settings UI.
  */
 function updatePressureDisplay() {
-    const emojis = ['😊', '😐', '😟', '😰', '😭'];
-    const emoji = emojis[Math.min(pressureLevel, emojis.length - 1)];
+    const settings = getSettings();
+    const max = settings.pressureMaxLevel || 4;
+
+    let emoji = '😊';
+    if (pressureLevel >= max) emoji = '💢';
+    else if (pressureLevel >= max - 1) emoji = '😠';
+    else if (pressureLevel >= 2) emoji = '😰';
+    else if (pressureLevel >= 1) emoji = '🥺';
+
     $('#autopulse_pressure_display').text(`${emoji} 等级 ${pressureLevel}`);
 
-    // Update color
-    const colors = ['#4caf50', '#8bc34a', '#ff9800', '#ff5722', '#f44336'];
-    const color = colors[Math.min(pressureLevel, colors.length - 1)];
-    $('#autopulse_pressure_display').css('color', color);
+    // Color logic
+    if (pressureLevel === 0) $('#autopulse_pressure_display').css('color', '');
+    else if (pressureLevel === 1) $('#autopulse_pressure_display').css('color', '#ffb74d'); // Orange
+    else if (pressureLevel === 2) $('#autopulse_pressure_display').css('color', '#ff9800'); // Dark orange
+    else if (pressureLevel === 3) $('#autopulse_pressure_display').css('color', '#f44336'); // Red
+    else $('#autopulse_pressure_display').css('color', '#d32f2f'); // Dark red
 }
 
 // ─── Desktop Notifications ───────────────────────────────────────────
@@ -453,11 +461,15 @@ function sendDesktopNotification(characterName, message) {
     if (!('Notification' in window)) return;
 
     if (Notification.permission === 'granted') {
-        new Notification(`${characterName} 发来了消息`, {
-            body: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
-            icon: '/favicon.ico',
-            tag: 'autopulse',
-        });
+        try {
+            new Notification(`${characterName} 发来了消息`, {
+                body: message.substring(0, 100) + (message.length > 100 ? '...' : ''),
+                icon: '/favicon.ico',
+                tag: 'autopulse',
+            });
+        } catch (e) {
+            console.warn('[AutoPulse] Failed to show desktop notification (mobile browser?):', e);
+        }
     } else if (Notification.permission !== 'denied') {
         Notification.requestPermission().then(perm => {
             if (perm === 'granted') {
@@ -467,206 +479,16 @@ function sendDesktopNotification(characterName, message) {
     }
 }
 
-// ─── Jealousy Floating Window ────────────────────────────────────────
-
-/**
- * Try to trigger a jealousy message from the previous character.
- * Called when user switches to a different chat.
- * @param {string} prevCharId The character ID that was left
- */
-function tryTriggerJealousy(prevCharId) {
-    const settings = getSettings();
-    if (!settings.jealousyEnabled || !prevCharId) return;
-
-    // Check if this character is in the jealousy whitelist
-    const allowedChars = settings.jealousyCharacters || [];
-    if (allowedChars.length === 0) {
-        console.log('[AutoPulse] Jealousy: no characters selected, skipping');
-        return;
-    }
-    if (!allowedChars.includes(String(prevCharId))) {
-        console.log(`[AutoPulse] Jealousy: character ${prevCharId} not in whitelist, skipping`);
-        return;
-    }
-
-    // Cancel any existing jealousy timeout
-    if (jealousyTimeout) {
-        clearTimeout(jealousyTimeout);
-        jealousyTimeout = null;
-    }
-
-    // Roll the dice
-    const chance = (settings.jealousyChance || 50) / 100;
-    if (Math.random() > chance) {
-        console.log('[AutoPulse] Jealousy roll failed, skipping');
-        return;
-    }
-
-    // Random delay
-    const minDelay = (settings.jealousyDelayMin || 30) * 1000;
-    const maxDelay = (settings.jealousyDelayMax || 120) * 1000;
-    const delay = minDelay + Math.random() * (maxDelay - minDelay);
-
-    console.log(`[AutoPulse] Jealousy triggered for character ${prevCharId}, firing in ${Math.round(delay / 1000)}s`);
-
-    jealousyTimeout = setTimeout(async () => {
-        await generateJealousyMessage(prevCharId);
-    }, delay);
-}
-
-/**
- * Generate and display a jealousy message from a specific character.
- * @param {string} characterId The jealous character's ID
- */
-async function generateJealousyMessage(characterId) {
-    if (isGenerating) {
-        console.log('[AutoPulse] Already generating, skipping jealousy');
-        toastr.warning('正在生成中，请稍候再试', 'AutoPulse');
-        return;
-    }
-
-    const ctx = SillyTavern.getContext();
-    const character = ctx.characters[characterId];
-    if (!character) {
-        console.warn('[AutoPulse] Character not found for jealousy:', characterId);
-        toastr.error('找不到角色', 'AutoPulse');
-        return;
-    }
-
-    const settings = getSettings();
-    const prompt = settings.jealousyPrompt?.trim() || JEALOUSY_PROMPT;
-    console.log('[AutoPulse] Using jealousy prompt:', prompt.substring(0, 60) + '...');
-
-    console.log(`[AutoPulse] Generating jealousy message from ${character.name} (id: ${characterId})...`);
-
-    isGenerating = true;
-    try {
-        // Use forceChId only if the character is NOT the current one
-        const options = { responseLength: 150, removeReasoning: true, trimToSentence: true };
-        if (String(characterId) !== String(ctx.characterId)) {
-            options.forceChId = characterId;
-        }
-
-        let result = await callGenerateQuietPrompt(prompt, options);
-        console.log('[AutoPulse] Jealousy raw result:', result);
-
-        if (!result || result.trim().length === 0) {
-            console.warn('[AutoPulse] Jealousy message empty, skipping');
-            toastr.warning('嫉妒消息生成为空', 'AutoPulse');
-            return;
-        }
-
-        // Post-process: strip CoT / thinking tags that some presets inject
-        let cleaned = result
-            .replace(/<thinking>[\s\S]*?<\/thinking>/gi, '')
-            .replace(/<thought>[\s\S]*?<\/thought>/gi, '')
-            .replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '')
-            .replace(/<chain_of_thought>[\s\S]*?<\/chain_of_thought>/gi, '')
-            .replace(/<内心[\s\S]*?>[\s\S]*?<\/内心[\s\S]*?>/gi, '')
-            .replace(/\[thinking\][\s\S]*?\[\/thinking\]/gi, '')
-            .trim();
-
-        // If still contains asterisk actions like *blushes*, strip them
-        cleaned = cleaned.replace(/\*[^*]+\*/g, '').trim();
-
-        // Take only the last meaningful line if there are multiple lines (CoT often before the actual reply)
-        const lines = cleaned.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        if (lines.length > 2) {
-            // Likely has CoT remnants, take last 1-2 lines
-            cleaned = lines.slice(-2).join('\n');
-        }
-
-        // Strip quotes if the whole thing is wrapped in quotes
-        cleaned = cleaned.replace(/^["「『"]([\s\S]+)["」』"]$/, '$1').trim();
-
-        if (!cleaned) {
-            console.warn('[AutoPulse] Jealousy message empty after cleanup');
-            toastr.warning('嫉妒消息清理后为空', 'AutoPulse');
-            return;
-        }
-
-        const messageText = cleaned;
-
-        // Show floating notification
-        try {
-            const avatarUrl = ctx.getThumbnailUrl('avatar', character.avatar);
-            console.log('[AutoPulse] Showing jealousy popup:', character.name, avatarUrl);
-            showJealousyPopup(character.name, avatarUrl, messageText);
-        } catch (popupErr) {
-            console.error('[AutoPulse] Popup creation failed:', popupErr);
-        }
-
-        // Toast notification
-        toastr.info(`${character.name} 看起来有点嫉妒...`, 'AutoPulse 💢', { timeOut: 5000 });
-
-        // Desktop notification
-        const settings = getSettings();
-        if (settings.notifyDesktop) {
-            sendDesktopNotification(character.name, messageText);
-        }
-
-        console.log(`[AutoPulse] Jealousy message sent: "${messageText.substring(0, 80)}"`);
-
-    } catch (e) {
-        console.error('[AutoPulse] Failed to generate jealousy message:', e);
-        toastr.error(`嫉妒消息生成失败: ${e.message}`, 'AutoPulse');
-    } finally {
-        isGenerating = false;
-    }
-}
-
-/**
- * Show a floating notification popup for jealousy messages.
- * @param {string} name Character name
- * @param {string} avatarUrl Character avatar URL
- * @param {string} message The jealousy message text
- */
-function showJealousyPopup(name, avatarUrl, message) {
-    // Create container if not exists
-    let container = document.getElementById('autopulse_jealousy_container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'autopulse_jealousy_container';
-        document.body.appendChild(container);
-    }
-
-    // Limit to 3 popups max
-    while (container.children.length >= 3) {
-        container.removeChild(container.firstChild);
-    }
-
-    const popup = document.createElement('div');
-    popup.className = 'autopulse-jealousy-popup';
-    popup.innerHTML = `
-        <div class="autopulse-jealousy-header">
-            <img class="autopulse-jealousy-avatar" src="${avatarUrl || '/favicon.ico'}" alt="${escapeHtml(name)}" />
-            <span class="autopulse-jealousy-name">${escapeHtml(name)} 💢</span>
-            <span class="autopulse-jealousy-close fa-solid fa-xmark"></span>
-        </div>
-        <div class="autopulse-jealousy-body">${escapeHtml(message).substring(0, 200)}${message.length > 200 ? '...' : ''}</div>
-    `;
-
-    // Close button
-    popup.querySelector('.autopulse-jealousy-close').addEventListener('click', () => {
-        popup.classList.add('autopulse-jealousy-exit');
-        setTimeout(() => popup.remove(), 300);
-    });
-
-    // Auto-dismiss after 15 seconds
-    setTimeout(() => {
-        if (popup.parentNode) {
-            popup.classList.add('autopulse-jealousy-exit');
-            setTimeout(() => popup.remove(), 300);
-        }
-    }, 15000);
-
-    container.appendChild(popup);
-}
-
-
 
 async function processOfflineQueue() {
     try {
+        const ctx = SillyTavern.getContext();
+        // Pause processing if no active chat
+        if (!ctx.characterId && !ctx.groupId) {
+            console.log('[AutoPulse] No active chat, deferring offline queue processing.');
+            return;
+        }
+
         const queue = await pluginRequest('/queue');
         if (!queue || queue.length === 0) return;
 
@@ -727,7 +549,13 @@ async function resetServerTimer() {
 function updateNextTriggerTime() {
     const settings = getSettings();
     if (settings.enabled) {
-        nextTriggerTime = Date.now() + (settings.intervalMinutes * 60 * 1000);
+        let intervalMs = settings.intervalMinutes * 60 * 1000;
+        // Apply pressure multiplier so the countdown matches actual timer interval
+        if (settings.pressureEnabled) {
+            const multiplier = PRESSURE_MULTIPLIERS[Math.min(pressureLevel, PRESSURE_MULTIPLIERS.length - 1)] || 1.0;
+            intervalMs = Math.max(60000, Math.round(intervalMs * multiplier));
+        }
+        nextTriggerTime = Date.now() + intervalMs;
         startCountdown();
     } else {
         nextTriggerTime = null;
@@ -835,55 +663,6 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-/**
- * Populate the jealousy character picker with checkboxes.
- */
-function loadJealousyCharacterPicker() {
-    const ctx = SillyTavern.getContext();
-    const settings = getSettings();
-    const container = $('#autopulse_jealousy_chars');
-    container.empty();
-
-    const characters = ctx.characters || [];
-    if (characters.length === 0) {
-        container.html('<span class="autopulse-hint">没有找到角色</span>');
-        return;
-    }
-
-    const selectedIds = settings.jealousyCharacters || [];
-
-    characters.forEach((char, idx) => {
-        if (!char || !char.name) return;
-        const charId = String(idx);
-        const isChecked = selectedIds.includes(charId);
-        const avatarUrl = ctx.getThumbnailUrl?.('avatar', char.avatar) || '/favicon.ico';
-
-        const chip = $(`
-            <label class="autopulse-char-chip ${isChecked ? 'selected' : ''}" title="${escapeHtml(char.name)}">
-                <input type="checkbox" value="${charId}" ${isChecked ? 'checked' : ''} style="display:none" />
-                <img class="autopulse-char-chip-avatar" src="${avatarUrl}" alt="" />
-                <span class="autopulse-char-chip-name">${escapeHtml(char.name)}</span>
-            </label>
-        `);
-
-        chip.find('input').on('change', function () {
-            const checked = this.checked;
-            const id = this.value;
-            chip.toggleClass('selected', checked);
-
-            if (checked && !settings.jealousyCharacters.includes(id)) {
-                settings.jealousyCharacters.push(id);
-            } else if (!checked) {
-                settings.jealousyCharacters = settings.jealousyCharacters.filter(c => c !== id);
-            }
-            saveSettings();
-            console.log('[AutoPulse] Jealousy characters:', settings.jealousyCharacters);
-        });
-
-        container.append(chip);
-    });
 }
 
 // ─── UI Status ───────────────────────────────────────────────────────
@@ -1103,15 +882,9 @@ function loadSettingsUI() {
     $('#autopulse_pressure_return').prop('checked', settings.pressureReturnEnabled);
     updatePressureDisplay();
 
-    // Jealousy system
-    $('#autopulse_jealousy_enabled').prop('checked', settings.jealousyEnabled);
-    $('#autopulse_jealousy_chance').val(settings.jealousyChance);
-    $('#autopulse_jealousy_chance_display').text(settings.jealousyChance + '%');
-    $('#autopulse_jealousy_delay_min').val(settings.jealousyDelayMin);
-    $('#autopulse_jealousy_delay_min_display').text(settings.jealousyDelayMin + 's');
-    $('#autopulse_jealousy_delay_max').val(settings.jealousyDelayMax);
-    $('#autopulse_jealousy_delay_max_display').text(settings.jealousyDelayMax + 's');
-    $('#autopulse_jealousy_prompt').val(settings.jealousyPrompt || '');
+    // ChatPulse Sync Settings
+    $('#autopulse_context_depth').val(settings.contextSyncDepth);
+    $('#autopulse_context_depth_display').text(settings.contextSyncDepth);
 }
 
 async function initExtension() {
@@ -1150,35 +923,17 @@ async function initExtension() {
         saveSettings();
     });
 
-    // Jealousy system UI events
-    $('#autopulse_jealousy_enabled').on('change', function () {
+    // ChatPulse Sync events
+    $('#autopulse_context_depth').on('input', function () {
         const settings = getSettings();
-        settings.jealousyEnabled = this.checked;
+        settings.contextSyncDepth = Number(this.value);
+        $('#autopulse_context_depth_display').text(this.value);
         saveSettings();
+        // Trigger an immediate sync so the new depth is applied
+        syncChatPulseContext();
     });
-    $('#autopulse_jealousy_chance').on('input', function () {
-        const settings = getSettings();
-        settings.jealousyChance = Number(this.value);
-        $('#autopulse_jealousy_chance_display').text(this.value + '%');
-        saveSettings();
-    });
-    $('#autopulse_jealousy_delay_min').on('input', function () {
-        const settings = getSettings();
-        settings.jealousyDelayMin = Number(this.value);
-        $('#autopulse_jealousy_delay_min_display').text(this.value + 's');
-        saveSettings();
-    });
-    $('#autopulse_jealousy_delay_max').on('input', function () {
-        const settings = getSettings();
-        settings.jealousyDelayMax = Number(this.value);
-        $('#autopulse_jealousy_delay_max_display').text(this.value + 's');
-        saveSettings();
-    });
-    $('#autopulse_jealousy_prompt').on('change', function () {
-        const settings = getSettings();
-        settings.jealousyPrompt = $(this).val().trim();
-        saveSettings();
-    });
+
+    $('#autopulse_context_summarize_btn').on('click', onContextSummarize);
 
     // ─── Test Buttons ───────────────────────────────────────
     $('#autopulse_test_pressure_up').on('click', () => {
@@ -1212,19 +967,8 @@ async function initExtension() {
         handleReturnReaction();
     });
 
-    $('#autopulse_test_jealousy').on('click', () => {
-        const ctx = SillyTavern.getContext();
-        if (!ctx.characterId) {
-            toastr.warning('请先打开一个角色聊天', 'AutoPulse 测试');
-            return;
-        }
-        toastr.info('正在生成嫉妒消息...', 'AutoPulse 测试');
-        generateJealousyMessage(ctx.characterId);
-    });
-
     // Load settings into UI
     loadSettingsUI();
-    loadJealousyCharacterPicker();
 
     // Try to connect to server plugin, fall back to frontend mode
     let serverAvailable = false;
@@ -1293,18 +1037,30 @@ async function initExtension() {
                 resetServerTimer();
             }
         }
+
+        // Sync context to ChatPulse on every user message
+        syncChatPulseContext();
     });
+
+    // Listen for AI responses to keep ChatPulse context up to date
+    if (ctx.eventTypes.MESSAGE_RECEIVED) {
+        ctx.eventSource.on(ctx.eventTypes.MESSAGE_RECEIVED, () => {
+            syncChatPulseContext();
+        });
+    }
 
     // Listen for chat changes — jealousy system + timer update
     ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => {
         const ctx = SillyTavern.getContext();
         const currentCharId = ctx.characterId;
 
-        // Jealousy: if we switched away from a character, trigger jealousy
-        if (previousCharacterId && previousCharacterId !== currentCharId) {
-            tryTriggerJealousy(previousCharacterId);
+        // Sync context to ChatPulse on chat change
+        syncChatPulseContext();
+
+        if (currentCharId !== undefined) {
+            // Attempt to process offline queue now that a chat is open
+            setTimeout(() => processOfflineQueue(), 1000);
         }
-        previousCharacterId = currentCharId;
 
         // Reset pressure when switching chats
         pressureLevel = 0;
@@ -1313,7 +1069,256 @@ async function initExtension() {
         updateNextTriggerTime();
     });
 
+    initChatPulseUI();
     console.log(`[AutoPulse] UI Extension initialized! (mode: ${useFallbackMode ? 'frontend' : 'server'})`);
+}
+
+// ─── ChatPulse Phone UI ──────────────────────────────────────────────
+
+function initChatPulseUI() {
+    // 1. Create the floating smartphone button
+    const btn = document.createElement('div');
+    btn.id = 'autopulse_chatpulse_btn';
+    btn.innerHTML = '<i class="fa-solid fa-mobile-screen"></i>';
+    btn.title = 'Open ChatPulse (AI Phone)';
+    document.body.appendChild(btn);
+
+    // 2. Create the glassmorphism overlay and iframe
+    const overlay = document.createElement('div');
+    overlay.id = 'autopulse_chatpulse_overlay';
+    // Load the ChatPulse React App directly from its Express backend on 8001
+    overlay.innerHTML = `
+        <div class="autopulse-phone-container">
+            <div class="autopulse-phone-header">
+                <span class="autopulse-phone-title">ChatPulse - Digital Society</span>
+                <i class="fa-solid fa-xmark" id="autopulse_chatpulse_close"></i>
+            </div>
+            <iframe id="autopulse_chatpulse_iframe" src="http://localhost:8001" frameborder="0"></iframe>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // 3. Bind events to toggle the UI
+    // To distinguish between a click and a drag
+    let isDragging = false;
+    let startX = 0, startY = 0;
+
+    // Restore saved position
+    const savedPos = localStorage.getItem('chatpulse_btn_pos');
+    if (savedPos) {
+        try {
+            const { right, bottom } = JSON.parse(savedPos);
+            btn.style.right = right;
+            btn.style.bottom = bottom;
+        } catch (e) { }
+    }
+
+    const initDrag = (e) => {
+        isDragging = false;
+        const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        startX = clientX;
+        startY = clientY;
+
+        const onMove = (moveEvent) => {
+            const mClientX = moveEvent.type.includes('touch') ? moveEvent.touches[0].clientX : moveEvent.clientX;
+            const mClientY = moveEvent.type.includes('touch') ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
+            const dx = mClientX - startX;
+            const dy = mClientY - startY;
+
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                isDragging = true;
+            }
+
+            if (isDragging) {
+                // Calculate new position relative to bottom/right
+                const rect = btn.getBoundingClientRect();
+                const newRight = window.innerWidth - (mClientX + rect.width / 2);
+                const newBottom = window.innerHeight - (mClientY + rect.height / 2);
+
+                btn.style.right = `${Math.max(10, Math.min(newRight, window.innerWidth - 60))}px`;
+                btn.style.bottom = `${Math.max(10, Math.min(newBottom, window.innerHeight - 60))}px`;
+            }
+        };
+
+        const onEnd = () => {
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onEnd);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onEnd);
+
+            if (isDragging) {
+                localStorage.setItem('chatpulse_btn_pos', JSON.stringify({
+                    right: btn.style.right,
+                    bottom: btn.style.bottom
+                }));
+            }
+        };
+
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
+    };
+
+    btn.addEventListener('mousedown', initDrag);
+    btn.addEventListener('touchstart', initDrag, { passive: false });
+
+    btn.addEventListener('click', (e) => {
+        if (!isDragging) {
+            overlay.classList.add('visible');
+        }
+    });
+
+    document.getElementById('autopulse_chatpulse_close').addEventListener('click', () => {
+        overlay.classList.remove('visible');
+    });
+}
+
+/**
+ * Capture SillyTavern Context and send it to ChatPulse Backend
+ */
+async function syncChatPulseContext() {
+    const ctx = SillyTavern.getContext();
+    if (!ctx.characterId) return; // Don't sync if no active 1-on-1 chat selected (groups could be supported later)
+
+    const character = ctx.characters[ctx.characterId];
+    if (!character) return;
+
+    const settings = getSettings();
+    const depth = settings.contextSyncDepth ?? 10;
+
+    // Grab the last N messages for recent ST memory context, excluding system messages
+    const chatHistory = (ctx.chat || []).filter(m => !m.is_system).slice(-depth).map(m => ({
+        is_user: m.is_user,
+        name: m.name || (m.is_user ? ctx.name1 : character.name),
+        mes: m.mes
+    }));
+
+    // Get Avatar fully qualified URL
+    let avatarUrl = '';
+    if (typeof ctx.getThumbnailUrl === 'function') {
+        avatarUrl = ctx.getThumbnailUrl('avatar', character.avatar);
+    }
+    // If it's a relative path, make it absolute (useful for ChatPulse backend that runs on 8001)
+    if (avatarUrl && avatarUrl.startsWith('/')) {
+        avatarUrl = window.location.origin + avatarUrl;
+    }
+
+    const payload = {
+        st_character_id: ctx.characterId, // This is the ST unique ID (usually avatar filename or folder name)
+        st_character_name: character.name,
+        st_avatar: avatarUrl,
+        st_user_name: ctx.name1 || 'User',
+        st_persona: `${character.description || ''}\n${character.personality || ''}`,
+        st_scenario: character.scenario || '',
+        chat_history: chatHistory
+    };
+
+    try {
+        const iframe = document.getElementById('autopulse_chatpulse_iframe');
+        const baseUrl = iframe ? new URL(iframe.src).origin : 'http://localhost:8001';
+
+        // Send payload to ChatPulse Express backend
+        await fetch(`${baseUrl}/api/integrations/st/context`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        console.log('[ST-ChatPulse] Context bridged to ChatPulse subsystem successfully.');
+    } catch (e) {
+        console.warn('[ST-ChatPulse] Bridge sync failed. Is ChatPulse backend running on 8001? (Error:', e.message, ')');
+    }
+}
+
+/**
+ * Summarize ST Context and push it to ChatPulse Long-Term Memory
+ */
+async function onContextSummarize() {
+    const ctx = SillyTavern.getContext();
+    if (!ctx.characterId) {
+        toastr.warning('请先在 SillyTavern 打开一个角色的聊天窗口', 'AutoPulse');
+        return;
+    }
+
+    const character = ctx.characters[ctx.characterId];
+    if (!character) return;
+
+    const settings = getSettings();
+    const depth = settings.contextSyncDepth ?? 10;
+
+    // Grab messages
+    const chatHistoryObjs = (ctx.chat || []).filter(m => !m.is_system).slice(-depth);
+    const chatHistory = chatHistoryObjs.map(m => {
+        const name = m.name || (m.is_user ? ctx.name1 : character.name);
+        return `${name}: ${m.mes}`;
+    });
+
+    if (chatHistory.length === 0) {
+        toastr.info('最近没有对话内容可以总结', 'AutoPulse');
+        return;
+    }
+
+    const chatLog = chatHistory.join('\n');
+    const prompt = `[系统指令] 请用一到两段话，客观地总结以下对话中的“核心事件”、“两人的关系进展”和“重要的既定事实”，提取为角色的“长期记忆”。不要描述细节，只需要提取关键记忆，以第三人称或角色的视角描述即可。\n\n对话原文:\n${chatLog}`;
+
+    const btn = $('#autopulse_context_summarize_btn');
+    const originalBtnHtml = btn.html();
+    btn.html('<span class="fa-solid fa-spinner fa-spin"></span> 总结中...').css('pointer-events', 'none');
+    toastr.info('正在由酒馆 LLM 提取长期记忆，请耐心等待...', 'AutoPulse');
+
+    try {
+        let summaryText = '';
+        if (typeof ctx.generateQuietPrompt === 'function') {
+            summaryText = await ctx.generateQuietPrompt(prompt, false, false, 'summary');
+        } else {
+            toastr.error('您的酒馆版本不支持静默生成API，请更新SillyTavern', 'AutoPulse');
+            return;
+        }
+
+        if (!summaryText) {
+            throw new Error('未生成任何总结结果');
+        }
+
+        // Get Avatar fully qualified URL
+        let avatarUrl = '';
+        if (typeof ctx.getThumbnailUrl === 'function') {
+            avatarUrl = ctx.getThumbnailUrl('avatar', character.avatar);
+        }
+        if (avatarUrl && avatarUrl.startsWith('/')) {
+            avatarUrl = window.location.origin + avatarUrl;
+        }
+
+        // Send to backend
+        const iframe = document.getElementById('autopulse_chatpulse_iframe');
+        const baseUrl = iframe ? new URL(iframe.src).origin : 'http://localhost:8001';
+
+        const payload = {
+            st_character_id: ctx.characterId,
+            st_character_name: character.name,
+            st_avatar: avatarUrl,
+            memory_summary: summaryText
+        };
+
+        const res = await fetch(`${baseUrl}/api/integrations/st/sync_memory`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            toastr.success('已成功提取并推送到 ChatPulse (手机) 的长期记忆中！', 'AutoPulse');
+        } else {
+            throw new Error(data.error || 'Server returned error');
+        }
+    } catch (e) {
+        console.error('[ST-ChatPulse] Error summarizing context:', e);
+        toastr.error(`提取记忆失败: ${e.message}`, 'AutoPulse');
+    } finally {
+        btn.html(originalBtnHtml).css('pointer-events', 'auto');
+    }
 }
 
 // ─── Fallback Frontend Timer ─────────────────────────────────────────
@@ -1328,15 +1333,23 @@ function startFallbackTimer() {
     const settings = getSettings();
     if (!settings.enabled) return;
 
-    const intervalMs = settings.intervalMinutes * 60 * 1000;
+    let intervalMs = settings.intervalMinutes * 60 * 1000;
+
+    // Apply pressure multiplier in fallback mode too
+    if (settings.pressureEnabled) {
+        const multiplier = PRESSURE_MULTIPLIERS[Math.min(pressureLevel, PRESSURE_MULTIPLIERS.length - 1)] || 1.0;
+        intervalMs = Math.max(60000, Math.round(intervalMs * multiplier));
+    }
+
+    const actualMinutes = Math.round(intervalMs / 60000);
 
     fallbackTimerInterval = setInterval(() => {
-        console.log('[AutoPulse] Fallback timer fired!');
-        handleTrigger(settings.prompt, `定时消息 (前端模式, 每${settings.intervalMinutes}分钟)`);
+        console.log(`[AutoPulse] Fallback timer fired! (pressure: ${pressureLevel})`);
+        handleTrigger(settings.prompt, `定时消息 (前端模式, 基础${settings.intervalMinutes}分, 压力${pressureLevel})`);
     }, intervalMs);
 
     updateNextTriggerTime();
-    console.log(`[AutoPulse] Fallback timer started, interval: ${settings.intervalMinutes} min`);
+    console.log(`[AutoPulse] Fallback timer started, base: ${settings.intervalMinutes}min, pressure: ${pressureLevel}, actual: ${actualMinutes}min`);
 }
 
 function stopFallbackTimer() {

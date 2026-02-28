@@ -6,6 +6,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { spawn } = require('child_process');
 
 const PLUGIN_ID = 'autopulse';
 const DATA_DIR = path.join(__dirname);
@@ -249,6 +250,48 @@ function restoreTimers() {
     console.log(`[AutoPulse] Restored ${Object.keys(data.timers || {}).length} timer(s) from saved data.`);
 }
 
+// ─── ChatPulse Subsystem Manager ─────────────────────────────────────
+
+let chatpulseProcess = null;
+
+function startChatPulseSubsystem() {
+    // Attempt to locate the ChatPulse server directory relative to this plugin.
+    // In dev, it's at ../../ChatPulse/server. 
+    // In a prod packed plugin, it might be ./ChatPulse/server.
+    let chatpulseDir = path.resolve(__dirname, '../../ChatPulse/server');
+    if (!fs.existsSync(path.join(chatpulseDir, 'index.js'))) {
+        chatpulseDir = path.resolve(__dirname, 'ChatPulse/server');
+    }
+
+    if (!fs.existsSync(path.join(chatpulseDir, 'index.js'))) {
+        console.warn('[AutoPulse] ChatPulse subsystem not found. Skipping auto-boot.');
+        return;
+    }
+
+    console.log('[AutoPulse] Booting ChatPulse Subsystem...');
+    chatpulseProcess = spawn('node', ['index.js'], {
+        cwd: chatpulseDir,
+        stdio: 'pipe',
+        env: process.env
+    });
+
+    chatpulseProcess.stdout.on('data', data => {
+        const text = data.toString().trim();
+        if (text) console.log(`[ChatPulse] ${text}`);
+    });
+
+    chatpulseProcess.stderr.on('data', data => {
+        const text = data.toString().trim();
+        // Ignore known harmless warnings or log them as errors
+        if (text) console.error(`[ChatPulse ERR] ${text}`);
+    });
+
+    chatpulseProcess.on('close', code => {
+        console.log(`[AutoPulse] ChatPulse subsystem exited with code ${code}`);
+        chatpulseProcess = null;
+    });
+}
+
 // ─── Plugin Init / Exit ──────────────────────────────────────────────
 
 /**
@@ -420,6 +463,9 @@ async function init(router) {
     restoreTimers();
     startScheduledTaskChecker();
 
+    // Boot ChatPulse independently
+    startChatPulseSubsystem();
+
     console.log('[AutoPulse] Server plugin initialized successfully!');
 }
 
@@ -443,6 +489,13 @@ async function exit() {
         try { client.end(); } catch (e) { /* ignore */ }
     }
     sseClients.clear();
+
+    // Kill ChatPulse subsystem politely if running
+    if (chatpulseProcess) {
+        console.log('[AutoPulse] Terminating ChatPulse subsystem...');
+        chatpulseProcess.kill();
+        chatpulseProcess = null;
+    }
 
     console.log('[AutoPulse] Server plugin shut down.');
 }
