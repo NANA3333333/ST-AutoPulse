@@ -1,14 +1,14 @@
 # ST-AutoPulse
 
-## Update Notes (2026-03-20)
+## 更新说明（2026-03-20）
 
-- Fixed the `characterId = 0` bug that could make the first character fail to trigger auto messages, jealousy, or offline queue handling.
-- Fixed offline queue clearing logic so unhandled events are no longer deleted prematurely.
-- Fixed jealousy context mixing so a jealous character no longer reads the currently open chat by mistake.
-- Added a `Custom Jailbreak Prompt` field for jealousy generation. When enabled, custom text is used first and falls back to the built-in preset if empty.
-- Fixed the broken settings HTML caused by the new jailbreak textarea so the rest of the panel and the `⚙️` independent API modal can render again.
-- Improved server-timer resume behavior: reopening SillyTavern now reuses the server plugin's existing timer instead of always resetting it.
-- Reduced one source of lag by removing a redundant timer reset request after user messages.
+- 修复 `characterId = 0` 时的判定问题，避免第一个角色无法正常触发自动消息、吃醋逻辑或离线队列处理。
+- 修复离线队列清空逻辑，未成功处理的事件不再被提前删除。
+- 修复吃醋上下文串台问题，避免角色错误读取当前打开聊天的内容。
+- 新增 `Custom Jailbreak Prompt` 自定义破限提示词。启用后会优先使用自定义内容，留空时回退到内置预设。
+- 修复自定义破限输入框导致的设置页 HTML 结构异常，现在后续面板和 `⚙️` 独立 API 配置弹窗可以正常显示。
+- 优化服务端计时器恢复逻辑，重新打开 SillyTavern 时会优先复用服务端已有计时器，而不是每次都重置。
+- 减少一次重复的计时器重置请求，缓解一部分使用时的卡顿问题。
 
 让 SillyTavern 中的角色能够**主动**向你发送消息的扩展。
 
