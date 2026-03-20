@@ -6,7 +6,6 @@
 
 const path = require('path');
 const fs = require('fs');
-const { spawn } = require('child_process');
 
 const PLUGIN_ID = 'autopulse';
 const DATA_DIR = path.join(__dirname);
@@ -108,6 +107,17 @@ function broadcastOrQueue(eventType, data) {
  */
 const DEFAULT_PRESSURE_MULTIPLIERS = [1.0, 0.7, 0.5, 0.3, 0.2];
 
+function updateTimerState(id, patch) {
+    const data = loadData();
+    if (!data.timers || !data.timers[id]) return;
+    data.timers[id] = {
+        ...data.timers[id],
+        ...patch,
+        updatedAt: Date.now(),
+    };
+    saveData(data);
+}
+
 function startTimer(id, config) {
     // Clear existing timer if any
     if (activeTimers.has(id)) {
@@ -127,6 +137,16 @@ function startTimer(id, config) {
     const multiplier = multipliers[Math.min(pressureLevel, multipliers.length - 1)] || 1.0;
     const actualMinutes = Math.max(1, Math.round(baseMinutes * multiplier));
     const intervalMs = actualMinutes * 60 * 1000;
+    const nextTriggerAt = Date.now() + intervalMs;
+
+    updateTimerState(id, {
+        pressureLevel,
+        pressureMultipliers: multipliers,
+        actualIntervalMinutes: actualMinutes,
+        intervalMs,
+        startedAt: Date.now(),
+        nextTriggerAt,
+    });
 
     const timer = setInterval(() => {
         console.log(`[AutoPulse] Timer "${id}" fired! (pressure: ${pressureLevel}, interval: ${actualMinutes}min)`);
@@ -135,6 +155,12 @@ function startTimer(id, config) {
             prompt: config.prompt || '',
             intervalMinutes: actualMinutes,
             pressureLevel: pressureLevel,
+        });
+        updateTimerState(id, {
+            lastTriggeredAt: Date.now(),
+            nextTriggerAt: Date.now() + intervalMs,
+            actualIntervalMinutes: actualMinutes,
+            intervalMs,
         });
     }, intervalMs);
 
@@ -250,47 +276,7 @@ function restoreTimers() {
     console.log(`[AutoPulse] Restored ${Object.keys(data.timers || {}).length} timer(s) from saved data.`);
 }
 
-// ─── ChatPulse Subsystem Manager ─────────────────────────────────────
 
-let chatpulseProcess = null;
-
-function startChatPulseSubsystem() {
-    // Attempt to locate the ChatPulse server directory relative to this plugin.
-    // In dev, it's at ../../ChatPulse/server. 
-    // In a prod packed plugin, it might be ./ChatPulse/server.
-    let chatpulseDir = path.resolve(__dirname, '../../ChatPulse/server');
-    if (!fs.existsSync(path.join(chatpulseDir, 'index.js'))) {
-        chatpulseDir = path.resolve(__dirname, 'ChatPulse/server');
-    }
-
-    if (!fs.existsSync(path.join(chatpulseDir, 'index.js'))) {
-        console.warn('[AutoPulse] ChatPulse subsystem not found. Skipping auto-boot.');
-        return;
-    }
-
-    console.log('[AutoPulse] Booting ChatPulse Subsystem...');
-    chatpulseProcess = spawn('node', ['index.js'], {
-        cwd: chatpulseDir,
-        stdio: 'pipe',
-        env: process.env
-    });
-
-    chatpulseProcess.stdout.on('data', data => {
-        const text = data.toString().trim();
-        if (text) console.log(`[ChatPulse] ${text}`);
-    });
-
-    chatpulseProcess.stderr.on('data', data => {
-        const text = data.toString().trim();
-        // Ignore known harmless warnings or log them as errors
-        if (text) console.error(`[ChatPulse ERR] ${text}`);
-    });
-
-    chatpulseProcess.on('close', code => {
-        console.log(`[AutoPulse] ChatPulse subsystem exited with code ${code}`);
-        chatpulseProcess = null;
-    });
-}
 
 // ─── Plugin Init / Exit ──────────────────────────────────────────────
 
@@ -458,13 +444,73 @@ async function init(router) {
             scheduledTasks: data.scheduledTasks || {},
         });
     });
-
     // Restore saved timers and start task checker
     restoreTimers();
     startScheduledTaskChecker();
 
-    // Boot ChatPulse independently
-    startChatPulseSubsystem();
+    // ─── Jealousy Per-Character Config ──────────────────────
+    const JEALOUSY_CONFIG_DIR = path.join(DATA_DIR, 'jealousy-configs');
+    if (!fs.existsSync(JEALOUSY_CONFIG_DIR)) {
+        fs.mkdirSync(JEALOUSY_CONFIG_DIR, { recursive: true });
+    }
+
+    // GET /jealousy-configs - list all character configs
+    router.get('/jealousy-configs', (req, res) => {
+        try {
+            const files = fs.readdirSync(JEALOUSY_CONFIG_DIR).filter(f => f.endsWith('.json'));
+            const configs = {};
+            for (const file of files) {
+                const charId = path.basename(file, '.json');
+                try {
+                    configs[charId] = JSON.parse(fs.readFileSync(path.join(JEALOUSY_CONFIG_DIR, file), 'utf-8'));
+                } catch (e) { /* skip malformed */ }
+            }
+            res.json({ success: true, configs });
+        } catch (e) {
+            res.json({ success: false, error: e.message });
+        }
+    });
+
+    // GET /jealousy-config/:charId - read one character's config
+    router.get('/jealousy-config/:charId', (req, res) => {
+        const filePath = path.join(JEALOUSY_CONFIG_DIR, `${req.params.charId}.json`);
+        if (!fs.existsSync(filePath)) {
+            return res.json({ success: true, config: null });
+        }
+        try {
+            const config = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            res.json({ success: true, config });
+        } catch (e) {
+            res.json({ success: false, error: e.message });
+        }
+    });
+
+    // PUT /jealousy-config/:charId - save/update config
+    router.put('/jealousy-config/:charId', (req, res) => {
+        const filePath = path.join(JEALOUSY_CONFIG_DIR, `${req.params.charId}.json`);
+        try {
+            const config = req.body;
+            fs.writeFileSync(filePath, JSON.stringify(config, null, 2), 'utf-8');
+            console.log(`[AutoPulse] Saved jealousy config for char ${req.params.charId}`);
+            res.json({ success: true });
+        } catch (e) {
+            res.json({ success: false, error: e.message });
+        }
+    });
+
+    // DELETE /jealousy-config/:charId - remove config
+    router.delete('/jealousy-config/:charId', (req, res) => {
+        const filePath = path.join(JEALOUSY_CONFIG_DIR, `${req.params.charId}.json`);
+        try {
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log(`[AutoPulse] Deleted jealousy config for char ${req.params.charId}`);
+            }
+            res.json({ success: true });
+        } catch (e) {
+            res.json({ success: false, error: e.message });
+        }
+    });
 
     console.log('[AutoPulse] Server plugin initialized successfully!');
 }
@@ -490,12 +536,7 @@ async function exit() {
     }
     sseClients.clear();
 
-    // Kill ChatPulse subsystem politely if running
-    if (chatpulseProcess) {
-        console.log('[AutoPulse] Terminating ChatPulse subsystem...');
-        chatpulseProcess.kill();
-        chatpulseProcess = null;
-    }
+
 
     console.log('[AutoPulse] Server plugin shut down.');
 }

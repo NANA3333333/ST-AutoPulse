@@ -74,25 +74,169 @@
 
             <hr />
 
-            <!-- ChatPulse Sync Settings -->
+            <!-- Jealousy System -->
             <div class="autopulse-section-header">
-                <b data-i18n="ChatPulse 同步设置">ChatPulse 同步 / Sync Settings 📱</b>
+                <b data-i18n="嫉妒系统">嫉妒系统 / Jealousy System 💢</b>
             </div>
 
             <div class="autopulse-row">
-                <label for="autopulse_context_depth">
-                    <span>同步上下文深度 / Sync Depth</span>
-                    <span id="autopulse_context_depth_display" class="autopulse-value-display">10</span>
+                <label class="checkbox_label" for="autopulse_jealousy_enabled">
+                    <input type="checkbox" id="autopulse_jealousy_enabled" />
+                    <span data-i18n="启用嫉妒系统">启用嫉妒系统 / Enable Jealousy</span>
                 </label>
-                <input type="range" id="autopulse_context_depth" min="0" max="50" value="10" />
+                <small class="autopulse-hint">（切换角色时触发 / Triggers when switching characters）</small>
+            </div>
+
+            <div class="autopulse-row">
+                <label>
+                    <span>选择会嫉妒的角色 / Jealous Characters：</span>
+                    <small class="autopulse-hint">（点击⚙️配置独立API / Click ⚙️ to set independent API）</small>
+                </label>
+                <div id="autopulse_jealousy_chars"
+                    style="max-height:180px; overflow-y:auto; border:1px solid var(--SmartThemeBorderColor); padding:5px; border-radius:5px;">
+                    <span class="autopulse-hint">加载中...</span>
+                </div>
+            </div>
+
+            <div class="autopulse-row">
+                <label for="autopulse_jealousy_context_depth">
+                    <span>嫉妒上下文深度 / Context Depth</span>
+                    <span id="autopulse_jealousy_context_depth_display" class="autopulse-value-display">10</span>
+                </label>
+                <input type="range" id="autopulse_jealousy_context_depth" min="0" max="50" value="10" />
+                <small class="autopulse-hint">（读取原角色最近X条对话作为上下文 / Recent messages as context）</small>
+            </div>
+
+            <div class="autopulse-row">
+                <label>
+                    <span>自定义嫉妒提示词 / Jealousy Prompt</span>
+                    <small class="autopulse-hint">（留空使用默认 / Leave empty for default）</small>
+                </label>
+                <textarea id="autopulse_jealousy_prompt" class="text_pole autopulse-textarea" rows="3"
+                    placeholder="留空=默认。示例：你发现对方在和别人聊天了，用1句话表达嫉妒，像发微信一样简短。"></textarea>
+            </div>
+
+            <div class="autopulse-row">
+                <label for="autopulse_jealousy_chance">
+                    <span>嫉妒触发概率 / Trigger Chance</span>
+                    <span id="autopulse_jealousy_chance_display" class="autopulse-value-display">50%</span>
+                </label>
+                <input type="range" id="autopulse_jealousy_chance" min="0" max="100" value="50" />
+            </div>
+
+            <div class="autopulse-row">
+                <label for="autopulse_jealousy_delay_min">
+                    <span>最短延迟 / Min Delay (s)</span>
+                    <span id="autopulse_jealousy_delay_min_display" class="autopulse-value-display">30s</span>
+                </label>
+                <input type="range" id="autopulse_jealousy_delay_min" min="5" max="300" value="30" />
+            </div>
+
+            <div class="autopulse-row">
+                <label for="autopulse_jealousy_delay_max">
+                    <span>最长延迟 / Max Delay (s)</span>
+                    <span id="autopulse_jealousy_delay_max_display" class="autopulse-value-display">120s</span>
+                </label>
+                <input type="range" id="autopulse_jealousy_delay_max" min="10" max="600" value="120" />
+            </div>
+
+            <!-- Jailbreak Preset -->
+            <div class="autopulse-row">
+                <label class="checkbox_label" for="autopulse_jealousy_jailbreak">
+                    <input type="checkbox" id="autopulse_jealousy_jailbreak" />
+                    <span>启用破限预设 / Enable Jailbreak Preset 🔓</span>
+                </label>
+                <small class="autopulse-hint">（绕过内容审查，确保嫉妒消息不被拒绝 / Bypass content filters for jealousy messages）</small>
+            </div>
+
+            <div class="autopulse-row">
+                <label for="autopulse_jealousy_jailbreak_prompt">
+                    <span>Custom Jailbreak Prompt</span>
+                    <small class="autopulse-hint">Leave empty to use the built-in jailbreak preset.</small>
+                </label>
+                <textarea
+                    id="autopulse_jealousy_jailbreak_prompt"
+                    class="text_pole autopulse-textarea"
+                    rows="4"
+                    placeholder="Optional custom jailbreak prompt"
+                ></textarea>
+            </div>
+
+            <!-- Regex Preset -->
+            <div class="autopulse-section-header" style="margin-top:8px;">
+                <b>正则预设 / Regex Preset</b>
             </div>
             <div class="autopulse-row">
-                <small class="autopulse-hint">（设置传给手机的最近对话条数 / recent messages sent to phone）</small>
+                <label class="checkbox_label" for="autopulse_jealousy_regex_enabled">
+                    <input type="checkbox" id="autopulse_jealousy_regex_enabled" checked />
+                    <span>启用内置正则清洗 / Enable Built-in Regex</span>
+                </label>
             </div>
             <div class="autopulse-row">
-                <div id="autopulse_context_summarize_btn" class="menu_button menu_button_icon">
-                    <span class="fa-solid fa-brain"></span>
-                    <span data-i18n="一键总结并同步长期记忆">一键总结并同步记忆 / Summarize & Sync</span>
+                <label><span>内置规则（只读）/ Built-in Rules (read-only)</span></label>
+                <div id="autopulse_builtin_regex_display" class="autopulse-builtin-regex-list"></div>
+            </div>
+            <div class="autopulse-row">
+                <label><span>自定义正则规则 / Custom Regex Rules</span></label>
+                <div id="autopulse_jealousy_regex_list" style="margin-bottom:5px;"></div>
+                <div id="autopulse_add_regex_rule" class="menu_button menu_button_icon" style="width:fit-content;">
+                    <span class="fa-solid fa-plus"></span>
+                    <span>添加规则 / Add Rule</span>
+                </div>
+            </div>
+
+            <div class="autopulse-row autopulse-test-buttons">
+                <div id="autopulse_test_jealousy" class="menu_button menu_button_icon" title="立即触发当前角色的嫉妒消息">
+                    <span class="fa-solid fa-fire"></span>
+                    <span>测试嫉妒弹窗 / Test Jealousy</span>
+                </div>
+            </div>
+
+            <!-- Jealousy API Config Modal -->
+            <div id="autopulse_jealousy_api_modal" class="autopulse-modal-overlay" style="display:none;">
+                <div class="autopulse-modal">
+                    <div class="autopulse-modal-header">
+                        <span id="autopulse_modal_char_name">⚙️ 角色嫉妒API配置</span>
+                        <span class="autopulse-modal-close fa-solid fa-xmark" id="autopulse_modal_close"></span>
+                    </div>
+                    <div class="autopulse-modal-body">
+                        <input type="hidden" id="autopulse_modal_char_id" />
+                        <div class="autopulse-row">
+                            <label>API Endpoint</label>
+                            <input type="text" id="autopulse_modal_api_endpoint" class="text_pole"
+                                placeholder="https://api.openai.com/v1/chat/completions" />
+                        </div>
+                        <div class="autopulse-row">
+                            <label>API Key</label>
+                            <input type="password" id="autopulse_modal_api_key" class="text_pole"
+                                placeholder="sk-..." />
+                        </div>
+                        <div class="autopulse-row">
+                            <label>Model Name</label>
+                            <input type="text" id="autopulse_modal_model_name" class="text_pole"
+                                placeholder="gpt-4o-mini" />
+                        </div>
+                        <div class="autopulse-row">
+                            <label>Max Tokens</label>
+                            <input type="number" id="autopulse_modal_max_tokens" class="text_pole" value="150" min="50"
+                                max="2000" />
+                        </div>
+                        <div class="autopulse-row">
+                            <label>Temperature</label>
+                            <input type="number" id="autopulse_modal_temperature" class="text_pole" value="0.9" min="0"
+                                max="2" step="0.1" />
+                        </div>
+                    </div>
+                    <div class="autopulse-modal-footer">
+                        <div id="autopulse_modal_delete" class="menu_button menu_button_icon" style="color:#f44336;">
+                            <span class="fa-solid fa-trash"></span>
+                            <span>删除配置 / Delete</span>
+                        </div>
+                        <div id="autopulse_modal_save" class="menu_button menu_button_icon">
+                            <span class="fa-solid fa-floppy-disk"></span>
+                            <span>保存 / Save</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
