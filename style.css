@@ -392,109 +392,180 @@
     }
 }
 
-/* ─── ChatPulse Phone UI ───────────────────────────────────────── */
+/* ─── Gear Icon on Char Chips ─────────────────────────────── */
 
-#autopulse_chatpulse_btn {
-    position: fixed;
-    right: 20px;
-    bottom: 80px;
-    /* Above ST native UI */
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
-    /* WeChat/ChatPulse Green */
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
+.autopulse-char-chip {
+    position: relative;
+}
+
+.autopulse-char-chip-gear {
+    font-size: 12px;
+    margin-left: 2px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(11, 163, 96, 0.4);
-    z-index: 9999;
-    transition: transform 0.2s, box-shadow 0.2s;
+    opacity: 0.4;
+    transition: opacity 0.2s, transform 0.2s;
 }
 
-#autopulse_chatpulse_btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 20px rgba(11, 163, 96, 0.6);
+.autopulse-char-chip:hover .autopulse-char-chip-gear {
+    opacity: 0.8;
 }
 
-#autopulse_chatpulse_overlay {
+.autopulse-char-chip-gear:hover {
+    opacity: 1 !important;
+    transform: scale(1.2);
+}
+
+.autopulse-char-chip-gear.configured {
+    opacity: 1;
+    color: #4caf50;
+}
+
+/* ─── API Config Modal ────────────────────────────────────── */
+
+.autopulse-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100%;
+    height: 100vh;
     background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    z-index: 100000;
+    backdrop-filter: blur(4px);
+    z-index: 100001;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
 }
 
-#autopulse_chatpulse_overlay.visible {
-    opacity: 1;
-    pointer-events: auto;
+.autopulse-modal {
+    background: var(--SmartThemeBlurTintColor, #1a1a2e);
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+    border-radius: 12px;
+    width: 420px;
+    max-width: 92vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
-.autopulse-phone-container {
-    width: 400px;
-    height: 850px;
-    max-width: 95vw;
-    max-height: 95vh;
-    background: #111;
-    border-radius: 36px;
-    border: 8px solid #222;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 0 2px #444;
-    transform: translateY(30px);
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-#autopulse_chatpulse_overlay.visible .autopulse-phone-container {
-    transform: translateY(0);
-}
-
-.autopulse-phone-header {
-    height: 44px;
-    background: #2a2a2a;
+.autopulse-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 20px;
-    color: white;
-    border-bottom: 1px solid #111;
-}
-
-.autopulse-phone-title {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor, #333);
     font-weight: 600;
-    font-size: 15px;
-    letter-spacing: 0.5px;
+    font-size: 14px;
 }
 
-#autopulse_chatpulse_close {
+.autopulse-modal-close {
     cursor: pointer;
-    padding: 4px;
-    font-size: 20px;
-    opacity: 0.7;
+    opacity: 0.6;
     transition: opacity 0.2s;
+    font-size: 18px;
 }
 
-#autopulse_chatpulse_close:hover {
+.autopulse-modal-close:hover {
     opacity: 1;
-    color: #ff5252;
+    color: #f44336;
 }
 
-#autopulse_chatpulse_iframe {
-    flex: 1;
-    width: 100%;
-    border: none;
-    background: #000;
+.autopulse-modal-body {
+    padding: 14px 18px;
+}
+
+.autopulse-modal-body .autopulse-row {
+    margin-bottom: 10px;
+}
+
+.autopulse-modal-body label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: block;
+    opacity: 0.8;
+}
+
+.autopulse-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-top: 1px solid var(--SmartThemeBorderColor, #333);
+    gap: 8px;
+}
+
+/* ─── Regex Rule List ─────────────────────────────────────── */
+
+.autopulse-regex-rule {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.autopulse-regex-pattern {
+    flex: 3;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.autopulse-regex-replacement {
+    flex: 2;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.autopulse-regex-flags {
+    flex: 0 0 50px;
+    font-family: monospace;
+    font-size: 12px;
+    text-align: center;
+}
+
+.autopulse-regex-delete {
+    cursor: pointer;
+    opacity: 0.5;
+    color: #f44336;
+    transition: opacity 0.2s;
+    padding: 4px;
+}
+
+.autopulse-regex-delete:hover {
+    opacity: 1;
+}
+
+/* ─── Built-in Regex Display ──────────────────────────────── */
+
+.autopulse-builtin-regex-list {
+    border: 1px solid var(--SmartThemeBorderColor, #333);
+    border-radius: 5px;
+    padding: 6px 8px;
+    max-height: 160px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.autopulse-builtin-regex-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.autopulse-builtin-regex-item:last-child {
+    border-bottom: none;
+}
+
+.autopulse-builtin-regex-label {
+    flex: 0 0 auto;
+    opacity: 0.7;
+    min-width: 130px;
+}
+
+.autopulse-builtin-regex-pattern {
+    font-family: monospace;
+    font-size: 11px;
+    opacity: 0.5;
+    word-break: break-all;
 }
