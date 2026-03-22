@@ -152,5 +152,5 @@ SillyTavern/
 
 本扩展遵循 **[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.zh-Hans)**。
 
-**你可以自由地：** 共享、演绎、甚至用于商业目的。
+**你可以自由地：** 共享、演绎、不允许用于商业目的。
 **只要你：** 署名 — 提供对此库作者恰当的署名。
