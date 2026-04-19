@@ -477,6 +477,25 @@
     margin-bottom: 10px;
 }
 
+.autopulse-model-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.autopulse-model-picker .text_pole {
+    flex: 1;
+}
+
+#autopulse_modal_fetch_models {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+#autopulse_modal_model_select {
+    width: 100%;
+}
+
 .autopulse-modal-body label {
     font-size: 12px;
     font-weight: 600;

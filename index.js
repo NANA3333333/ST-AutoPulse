@@ -144,6 +144,102 @@ function normalizeIndependentApiEndpoint(endpoint) {
     return `${raw.replace(/\/+$/, '')}/v1/chat/completions`;
 }
 
+function getModelListCandidates(endpoint) {
+    const normalizedEndpoint = normalizeIndependentApiEndpoint(endpoint);
+    if (!normalizedEndpoint) {
+        return [];
+    }
+
+    const strippedEndpoint = normalizedEndpoint.replace(/\/(chat\/completions|responses)\/*$/i, '');
+    const candidates = [`${strippedEndpoint.replace(/\/+$/, '')}/models`];
+
+    if (!/\/v\d+(\/|$)/i.test(strippedEndpoint)) {
+        candidates.push(`${strippedEndpoint.replace(/\/+$/, '')}/v1/models`);
+    }
+
+    return [...new Set(candidates)];
+}
+
+function setModelFetchState({ loading = false, hint = '', isError = false } = {}) {
+    const button = $('#autopulse_modal_fetch_models');
+    const select = $('#autopulse_modal_model_select');
+    const hintEl = $('#autopulse_modal_model_hint');
+
+    if (button.length) {
+        button.toggleClass('disabled', loading);
+        button.find('span:last').text(loading ? 'Loading...' : '拉取模型');
+    }
+
+    if (select.length) {
+        select.prop('disabled', loading);
+    }
+
+    if (hintEl.length) {
+        hintEl.text(hint || '会尝试从当前渠道读取可用模型列表');
+        hintEl.css('color', isError ? '#f44336' : '');
+    }
+}
+
+function renderModelOptions(models, selectedModel = '') {
+    const select = $('#autopulse_modal_model_select');
+    if (!select.length) {
+        return;
+    }
+
+    select.empty();
+    select.append('<option value="">手动填写，或点击“拉取模型”</option>');
+
+    for (const model of models) {
+        const option = $('<option></option>').val(model).text(model);
+        if (selectedModel && model === selectedModel) {
+            option.prop('selected', true);
+        }
+        select.append(option);
+    }
+}
+
+async function fetchIndependentApiModels(rawEndpoint, apiKey) {
+    const candidates = getModelListCandidates(rawEndpoint);
+    let lastError = 'No model endpoint candidates';
+
+    for (const candidate of candidates) {
+        try {
+            const response = await fetch(candidate, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                },
+            });
+
+            if (!response.ok) {
+                const errText = await response.text().catch(() => response.statusText || 'Unknown error');
+                throw new Error(`${response.status} ${errText.substring(0, 160)}`);
+            }
+
+            const data = await response.json();
+            const models = Array.isArray(data?.data)
+                ? data.data.map(item => item?.id).filter(Boolean)
+                : Array.isArray(data)
+                    ? data.map(item => item?.id || item?.name || item).filter(Boolean)
+                    : [];
+
+            if (models.length === 0) {
+                throw new Error('No models returned');
+            }
+
+            return {
+                models: [...new Set(models)].sort((a, b) => a.localeCompare(b)),
+                endpoint: candidate,
+            };
+        } catch (error) {
+            lastError = `${candidate}: ${error.message}`;
+        }
+    }
+
+    throw new Error(lastError);
+}
+
 /**
  * Make an API request to the server plugin.
  */
@@ -1138,6 +1234,42 @@ async function initExtension() {
     $('#autopulse_jealousy_api_modal').on('click', function (e) {
         if (e.target === this) $(this).hide(); // Close on overlay click
     });
+    $('#autopulse_modal_model_select').on('change', function () {
+        const selectedModel = $(this).val();
+        if (selectedModel) {
+            $('#autopulse_modal_model_name').val(selectedModel);
+        }
+    });
+    $('#autopulse_modal_fetch_models').on('click', async () => {
+        const rawEndpoint = $('#autopulse_modal_api_endpoint').val().trim();
+        const apiKey = $('#autopulse_modal_api_key').val().trim();
+        const selectedModel = $('#autopulse_modal_model_name').val().trim();
+
+        if (!rawEndpoint || !apiKey) {
+            toastr.warning('Please fill API Endpoint and API Key first', 'AutoPulse');
+            return;
+        }
+
+        setModelFetchState({ loading: true, hint: 'Loading available models...' });
+
+        try {
+            const { models, endpoint } = await fetchIndependentApiModels(rawEndpoint, apiKey);
+            renderModelOptions(models, selectedModel);
+            setModelFetchState({
+                loading: false,
+                hint: `Loaded ${models.length} models from ${endpoint}`,
+            });
+            toastr.success(`Loaded ${models.length} models`, 'AutoPulse');
+        } catch (error) {
+            renderModelOptions([], selectedModel);
+            setModelFetchState({
+                loading: false,
+                hint: `Failed to load models: ${error.message}`,
+                isError: true,
+            });
+            toastr.error(`Failed to load models: ${error.message}`, 'AutoPulse');
+        }
+    });
     $('#autopulse_modal_save').on('click', async () => {
         const charId = $('#autopulse_modal_char_id').val();
         const rawEndpoint = $('#autopulse_modal_api_endpoint').val().trim();
@@ -1145,7 +1277,7 @@ async function initExtension() {
         const config = {
             apiEndpoint: normalizedEndpoint,
             apiKey: $('#autopulse_modal_api_key').val().trim(),
-            modelName: $('#autopulse_modal_model_name').val().trim() || 'gpt-4o-mini',
+            modelName: ($('#autopulse_modal_model_select').val() || $('#autopulse_modal_model_name').val()).trim() || 'gpt-4o-mini',
             maxTokens: parseInt($('#autopulse_modal_max_tokens').val()) || 150,
             temperature: parseFloat($('#autopulse_modal_temperature').val()) ?? 0.9,
         };
@@ -1859,6 +1991,8 @@ function openJealousyApiModal(charId, charName) {
     $('#autopulse_modal_api_endpoint').val(config.apiEndpoint || '');
     $('#autopulse_modal_api_key').val(config.apiKey || '');
     $('#autopulse_modal_model_name').val(config.modelName || '');
+    renderModelOptions([], config.modelName || '');
+    setModelFetchState();
     $('#autopulse_modal_max_tokens').val(config.maxTokens || 150);
     $('#autopulse_modal_temperature').val(config.temperature ?? 0.9);
 

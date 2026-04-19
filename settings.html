@@ -213,8 +213,18 @@
                         </div>
                         <div class="autopulse-row">
                             <label>Model Name</label>
-                            <input type="text" id="autopulse_modal_model_name" class="text_pole"
-                                placeholder="gpt-4o-mini" />
+                            <div class="autopulse-model-picker">
+                                <input type="text" id="autopulse_modal_model_name" class="text_pole"
+                                    placeholder="gpt-4o-mini" />
+                                <div id="autopulse_modal_fetch_models" class="menu_button menu_button_icon">
+                                    <span class="fa-solid fa-rotate"></span>
+                                    <span>拉取模型</span>
+                                </div>
+                            </div>
+                            <select id="autopulse_modal_model_select" class="text_pole" style="margin-top:6px;">
+                                <option value="">手动填写，或点击“拉取模型”</option>
+                            </select>
+                            <small id="autopulse_modal_model_hint" class="autopulse-hint">会尝试从当前渠道读取可用模型列表</small>
                         </div>
                         <div class="autopulse-row">
                             <label>Max Tokens</label>
