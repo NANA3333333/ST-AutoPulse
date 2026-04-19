@@ -141,7 +141,41 @@ function normalizeIndependentApiEndpoint(endpoint) {
         return raw;
     }
 
+     if (/\/v\d+\/*$/i.test(raw)) {
+        return `${raw.replace(/\/+$/, '')}/chat/completions`;
+    }
+
     return `${raw.replace(/\/+$/, '')}/v1/chat/completions`;
+}
+
+function getChatCompletionCandidates(endpoint) {
+    const raw = String(endpoint || '').trim();
+    if (!raw) {
+        return [];
+    }
+
+    if (/\/(chat\/completions|responses)\/*$/i.test(raw)) {
+        return [raw];
+    }
+
+    const stripped = raw.replace(/\/+$/, '');
+    const candidates = [];
+
+    if (/\/models\/*$/i.test(stripped)) {
+        const base = stripped.replace(/\/models\/*$/i, '');
+        candidates.push(`${base}/chat/completions`);
+        candidates.push(`${base}/responses`);
+    } else if (/\/v\d+$/i.test(stripped)) {
+        candidates.push(`${stripped}/chat/completions`);
+        candidates.push(`${stripped}/responses`);
+    } else {
+        candidates.push(`${stripped}/v1/chat/completions`);
+        candidates.push(`${stripped}/v1/responses`);
+        candidates.push(`${stripped}/chat/completions`);
+        candidates.push(`${stripped}/responses`);
+    }
+
+    return [...new Set(candidates)];
 }
 
 function getModelListCandidates(endpoint) {
@@ -1609,29 +1643,42 @@ async function callJealousyAPI(characterId, jealousyInstruction) {
         content: jealousyInstruction,
     });
 
-    console.log(`[AutoPulse] Calling independent API: ${charConfig.apiEndpoint} model=${charConfig.modelName}`);
+    const endpointCandidates = getChatCompletionCandidates(charConfig.apiEndpoint);
+    let lastError = 'No API endpoint candidates';
 
-    const response = await fetch(charConfig.apiEndpoint, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${charConfig.apiKey}`,
-        },
-        body: JSON.stringify({
-            model: charConfig.modelName || 'gpt-4o-mini',
-            messages: contextMessages,
-            max_tokens: charConfig.maxTokens || 150,
-            temperature: charConfig.temperature ?? 0.9,
-        }),
-    });
+    for (const endpoint of endpointCandidates) {
+        console.log(`[AutoPulse] Calling independent API: ${endpoint} model=${charConfig.modelName}`);
 
-    if (!response.ok) {
-        const errText = await response.text().catch(() => 'Unknown error');
-        throw new Error(`API ${response.status}: ${errText.substring(0, 200)}`);
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${charConfig.apiKey}`,
+            },
+            body: JSON.stringify({
+                model: charConfig.modelName || 'gpt-4o-mini',
+                messages: contextMessages,
+                max_tokens: charConfig.maxTokens || 150,
+                temperature: charConfig.temperature ?? 0.9,
+            }),
+        });
+
+        if (!response.ok) {
+            const errText = await response.text().catch(() => 'Unknown error');
+            lastError = `API ${response.status}: ${errText.substring(0, 200)}`;
+
+            if (response.status === 404 || response.status === 405) {
+                continue;
+            }
+
+            throw new Error(lastError);
+        }
+
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || '';
     }
 
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || '';
+    throw new Error(lastError);
 }
 
 /**
