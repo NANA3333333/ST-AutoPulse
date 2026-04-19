@@ -96,6 +96,8 @@ let jealousyTimeout = null;
 
 /** @type {Object<string, object>} Cached per-character jealousy API configs */
 let jealousyCharConfigs = {};
+/** @type {Object<string, Array<{role: string, content: string}>>} */
+let jealousyContextCache = {};
 
 function hasActiveChat(ctx) {
     return (ctx.characterId !== undefined && ctx.characterId !== null)
@@ -104,6 +106,10 @@ function hasActiveChat(ctx) {
 
 function hasActiveCharacter(ctx) {
     return ctx.characterId !== undefined && ctx.characterId !== null;
+}
+
+function getCurrentCharacterId(ctx = SillyTavern.getContext()) {
+    return hasActiveCharacter(ctx) ? String(ctx.characterId) : null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -127,6 +133,17 @@ function saveSettings() {
     ctx.saveSettingsDebounced();
 }
 
+function normalizeIndependentApiEndpoint(endpoint) {
+    const raw = String(endpoint || '').trim();
+    if (!raw) return '';
+
+    if (/\/(chat\/completions|responses)\/*$/i.test(raw)) {
+        return raw;
+    }
+
+    return `${raw.replace(/\/+$/, '')}/v1/chat/completions`;
+}
+
 /**
  * Make an API request to the server plugin.
  */
@@ -144,6 +161,31 @@ async function pluginRequest(endpoint, method = 'GET', body = null) {
         throw new Error(`Plugin request failed: ${response.status} ${response.statusText}`);
     }
     return response.json();
+}
+
+async function acknowledgeQueueEvents(eventIds) {
+    if (!Array.isArray(eventIds) || eventIds.length === 0) {
+        return;
+    }
+
+    await pluginRequest('/queue/ack', 'POST', { eventIds });
+}
+
+function snapshotCurrentCharacterContext(ctx = SillyTavern.getContext()) {
+    const characterId = getCurrentCharacterId(ctx);
+    if (!characterId) {
+        return;
+    }
+
+    const settings = getSettings();
+    const depth = settings.jealousyContextDepth || 10;
+    jealousyContextCache[characterId] = (ctx.chat || [])
+        .filter(m => !m.is_system)
+        .slice(-depth)
+        .map(m => ({
+            role: m.is_user ? 'user' : 'assistant',
+            content: m.mes || '',
+        }));
 }
 
 // ─── Polling Connection (Web Worker) ─────────────────────────────────
@@ -248,11 +290,34 @@ async function pollForEvents() {
             console.log(`[AutoPulse] Received ${response.events.length} event(s) from server`);
 
             for (const event of response.events) {
+                const currentCharacterId = getCurrentCharacterId(ctx);
+                const targetCharacterId = event.data?.characterId != null ? String(event.data.characterId) : null;
+
+                if (targetCharacterId && currentCharacterId && targetCharacterId !== currentCharacterId) {
+                    console.log(`[AutoPulse] Deferring event ${event.id} for character ${targetCharacterId}; current chat is ${currentCharacterId}`);
+                    continue;
+                }
+
+                let handled = false;
                 if (event.type === 'timer_trigger') {
                     const data = event.data;
                     console.log('[AutoPulse] Timer triggered:', data);
-                    await handleTrigger(data.prompt, `定时消息 (每${data.intervalMinutes}分钟)`);
+                    handled = await handleTrigger(data.prompt, `timer_trigger:${data.intervalMinutes}`);
                 } else if (event.type === 'scheduled_task_trigger') {
+                    const data = event.data;
+                    console.log('[AutoPulse] Scheduled task triggered:', data);
+                    handled = await handleTrigger(data.prompt, `scheduled_task:${data.taskName}`);
+                }
+
+                if (handled && event.id) {
+                    await acknowledgeQueueEvents([event.id]);
+                }
+
+                if (false && event.type === 'timer_trigger') {
+                    const data = event.data;
+                    console.log('[AutoPulse] Timer triggered:', data);
+                    await handleTrigger(data.prompt, `定时消息 (每${data.intervalMinutes}分钟)`);
+                } else if (false && event.type === 'scheduled_task_trigger') {
                     const data = event.data;
                     console.log('[AutoPulse] Scheduled task triggered:', data);
                     await handleTrigger(data.prompt, `定时任务: ${data.taskName}`);
@@ -372,6 +437,7 @@ async function handleTrigger(customPrompt, source = '自动消息') {
 
         // Save the chat
         await ctx.saveChat();
+        snapshotCurrentCharacterContext(ctx);
 
         console.log(`[AutoPulse] Message generated and added to chat: "${messageText.substring(0, 50)}..."`);
 
@@ -466,6 +532,7 @@ async function handleReturnReaction() {
         const messageId = ctx.chat.length - 1;
         ctx.addOneMessage(message, { insertAfter: messageId - 1 });
         await ctx.saveChat();
+        snapshotCurrentCharacterContext(ctx);
 
         console.log(`[AutoPulse] Return reaction sent: "${messageText.substring(0, 50)}..."`);
         toastr.info(`${ctx.name2} 对你的回归做出了反应`, 'AutoPulse', { timeOut: 3000 });
@@ -540,9 +607,15 @@ async function processOfflineQueue() {
         console.log(`[AutoPulse] Processing ${queue.length} queued event(s)...`);
         toastr.info(`有 ${queue.length} 条离线消息待处理`, 'AutoPulse');
 
-        let processedAll = true;
+        const processedEventIds = [];
 
         for (const event of queue) {
+            const currentCharacterId = getCurrentCharacterId(ctx);
+            const targetCharacterId = event.data?.characterId != null ? String(event.data.characterId) : null;
+            if (targetCharacterId && currentCharacterId && targetCharacterId !== currentCharacterId) {
+                continue;
+            }
+
             const prompt = event.data?.prompt || '';
             const source = event.type === 'timer_trigger'
                 ? `离线定时消息`
@@ -552,15 +625,18 @@ async function processOfflineQueue() {
             await new Promise(resolve => setTimeout(resolve, 2000));
             const handled = await handleTrigger(prompt, source);
             if (!handled) {
-                processedAll = false;
                 console.warn('[AutoPulse] Stopping offline queue processing early to avoid dropping unhandled events.');
                 break;
             }
+
+            if (event.id) {
+                processedEventIds.push(event.id);
+            }
         }
 
-        if (processedAll) {
-            await pluginRequest('/queue', 'DELETE');
-            console.log('[AutoPulse] Queue cleared');
+        if (processedEventIds.length > 0) {
+            await acknowledgeQueueEvents(processedEventIds);
+            console.log(`[AutoPulse] Acknowledged ${processedEventIds.length} queued event(s)`);
         }
     } catch (e) {
         console.error('[AutoPulse] Failed to process offline queue:', e);
@@ -571,9 +647,11 @@ async function processOfflineQueue() {
 
 async function syncTimerToServer() {
     const settings = getSettings();
+    const ctx = SillyTavern.getContext();
     try {
         await pluginRequest('/timers', 'POST', {
             id: settings.lastTimerId || 'default',
+            characterId: getCurrentCharacterId(ctx),
             intervalMinutes: settings.intervalMinutes,
             prompt: settings.prompt,
             enabled: settings.enabled,
@@ -599,6 +677,8 @@ async function resetServerTimer() {
 
 function updateNextTriggerTimeFromServer(timer) {
     if (timer?.nextTriggerAt) {
+        pressureLevel = Number(timer.pressureLevel) || 0;
+        updatePressureDisplay();
         nextTriggerTime = Number(timer.nextTriggerAt);
         startCountdown();
         return true;
@@ -813,6 +893,7 @@ function onRepeatTypeChange() {
 
 async function onAddTask() {
     const name = $('#autopulse_task_name').val().trim();
+    const ctx = SillyTavern.getContext();
     if (!name) {
         toastr.warning('请输入任务名称', 'AutoPulse');
         return;
@@ -827,6 +908,7 @@ async function onAddTask() {
         weekday: Number($('#autopulse_task_weekday').val()) || 1,
         date: $('#autopulse_task_date').val() || null,
         prompt: $('#autopulse_task_prompt').val().trim(),
+        characterId: getCurrentCharacterId(ctx),
         enabled: true,
     };
 
@@ -998,6 +1080,9 @@ async function initExtension() {
         settings.pressureEnabled = this.checked;
         saveSettings();
         if (!this.checked) { pressureLevel = 0; updatePressureDisplay(); }
+        if (!useFallbackMode && settings.enabled) {
+            syncTimerToServer();
+        }
     });
     $('#autopulse_pressure_max').on('input', function () {
         const settings = getSettings();
@@ -1055,8 +1140,10 @@ async function initExtension() {
     });
     $('#autopulse_modal_save').on('click', async () => {
         const charId = $('#autopulse_modal_char_id').val();
+        const rawEndpoint = $('#autopulse_modal_api_endpoint').val().trim();
+        const normalizedEndpoint = normalizeIndependentApiEndpoint(rawEndpoint);
         const config = {
-            apiEndpoint: $('#autopulse_modal_api_endpoint').val().trim(),
+            apiEndpoint: normalizedEndpoint,
             apiKey: $('#autopulse_modal_api_key').val().trim(),
             modelName: $('#autopulse_modal_model_name').val().trim() || 'gpt-4o-mini',
             maxTokens: parseInt($('#autopulse_modal_max_tokens').val()) || 150,
@@ -1065,6 +1152,10 @@ async function initExtension() {
         if (!config.apiEndpoint || !config.apiKey) {
             toastr.warning('请填写 API Endpoint 和 API Key', 'AutoPulse');
             return;
+        }
+        if (rawEndpoint !== normalizedEndpoint) {
+            $('#autopulse_modal_api_endpoint').val(normalizedEndpoint);
+            toastr.info(`Auto-completed endpoint: ${normalizedEndpoint}`, 'AutoPulse');
         }
         const result = await saveJealousyCharConfig(charId, config);
         if (result.success) {
@@ -1121,6 +1212,7 @@ async function initExtension() {
     });
 
     $('#autopulse_test_jealousy').on('click', () => {
+        const ctx = SillyTavern.getContext();
         const charId = ctx.characterId;
         if (!hasActiveCharacter(ctx)) {
             toastr.warning('请先打开一个角色的聊天', 'AutoPulse');
@@ -1160,8 +1252,9 @@ async function initExtension() {
 
         const settings = getSettings();
         const serverTimer = serverStatus?.timers?.[settings.lastTimerId || 'default'];
+        const currentCharacterId = getCurrentCharacterId(ctx);
         if (settings.enabled) {
-            if (!serverTimer?.enabled) {
+            if (!serverTimer?.enabled || String(serverTimer?.characterId ?? '') !== String(currentCharacterId ?? '')) {
                 syncTimerToServer();
             } else {
                 updateNextTriggerTimeFromServer(serverTimer);
@@ -1186,6 +1279,7 @@ async function initExtension() {
 
     // Listen for user messages to reset the idle timer + pressure system
     ctx.eventSource.on(ctx.eventTypes.MESSAGE_SENT, () => {
+        const ctx = SillyTavern.getContext();
         const settings = getSettings();
 
         // Handle pressure system: mark return reaction and reset
@@ -1201,6 +1295,7 @@ async function initExtension() {
         }
 
         lastUserMessageTime = Date.now();
+        snapshotCurrentCharacterContext(ctx);
 
         if (settings.enabled) {
             if (useFallbackMode) {
@@ -1214,6 +1309,7 @@ async function initExtension() {
     // Listen for chat changes — jealousy system + timer update
     ctx.eventSource.on(ctx.eventTypes.CHAT_CHANGED, () => {
         const ctx = SillyTavern.getContext();
+        const settings = getSettings();
         const currentCharId = ctx.characterId;
 
         if (currentCharId !== undefined && currentCharId !== null) {
@@ -1235,13 +1331,19 @@ async function initExtension() {
         // Reset pressure when switching chats
         pressureLevel = 0;
         updatePressureDisplay();
+        snapshotCurrentCharacterContext(ctx);
 
-        updateNextTriggerTime();
+        if (settings.enabled && !useFallbackMode) {
+            syncTimerToServer();
+        } else {
+            updateNextTriggerTime();
+        }
     });
 
     // Handle initial chat selection
     if (hasActiveCharacter(ctx)) {
         previousCharacterId = ctx.characterId;
+        snapshotCurrentCharacterContext(ctx);
     }
 
     console.log(`[AutoPulse] UI Extension initialized! (mode: ${useFallbackMode ? 'frontend' : 'server'})`);
@@ -1307,14 +1409,15 @@ function buildJealousyContext(characterId) {
 
     // Only reuse chat history when we're still viewing this exact character.
     // Otherwise using ctx.chat would leak the current chat into another character's jealousy context.
-    const chat = String(ctx.characterId) === String(characterId) ? (ctx.chat || []) : [];
-    const recentMessages = chat
-        .filter(m => !m.is_system)
-        .slice(-depth)
-        .map(m => ({
-            role: m.is_user ? 'user' : 'assistant',
-            content: m.mes || '',
-        }));
+    const recentMessages = String(ctx.characterId) === String(characterId)
+        ? (ctx.chat || [])
+            .filter(m => !m.is_system)
+            .slice(-depth)
+            .map(m => ({
+                role: m.is_user ? 'user' : 'assistant',
+                content: m.mes || '',
+            }))
+        : (jealousyContextCache[String(characterId)] || []).slice(-depth);
 
     // Build system message with character persona
     const systemContent = [
@@ -1448,7 +1551,10 @@ function applyJealousyRegex(text) {
  */
 async function loadJealousyCharConfigs() {
     try {
-        const res = await fetch(`${API_BASE}/jealousy-configs`);
+        const ctx = SillyTavern.getContext();
+        const res = await fetch(`${API_BASE}/jealousy-configs`, {
+            headers: ctx.getRequestHeaders(),
+        });
         const data = await res.json();
         if (data.success) {
             jealousyCharConfigs = data.configs || {};
@@ -1465,9 +1571,13 @@ async function loadJealousyCharConfigs() {
  */
 async function saveJealousyCharConfig(charId, config) {
     try {
+        const ctx = SillyTavern.getContext();
         const res = await fetch(`${API_BASE}/jealousy-config/${charId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                ...ctx.getRequestHeaders(),
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify(config),
         });
         const data = await res.json();
@@ -1487,7 +1597,11 @@ async function saveJealousyCharConfig(charId, config) {
  */
 async function deleteJealousyCharConfig(charId) {
     try {
-        const res = await fetch(`${API_BASE}/jealousy-config/${charId}`, { method: 'DELETE' });
+        const ctx = SillyTavern.getContext();
+        const res = await fetch(`${API_BASE}/jealousy-config/${charId}`, {
+            method: 'DELETE',
+            headers: ctx.getRequestHeaders(),
+        });
         const data = await res.json();
         if (data.success) {
             delete jealousyCharConfigs[String(charId)];

@@ -21,6 +21,10 @@ const sseClients = new Set();
 /** @type {Array<object>} Pending events for polling clients */
 const pendingEvents = [];
 
+function createEventId() {
+    return `evt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 // ─── Data Persistence ────────────────────────────────────────────────
 
 function loadData() {
@@ -61,6 +65,23 @@ function saveQueue(queue) {
     }
 }
 
+function acknowledgeQueueEvents(eventIds) {
+    if (!Array.isArray(eventIds) || eventIds.length === 0) {
+        return 0;
+    }
+
+    const ids = new Set(eventIds.map(String));
+    const queue = loadQueue();
+    const nextQueue = queue.filter(event => !ids.has(String(event.id)));
+    const removed = queue.length - nextQueue.length;
+
+    if (removed > 0) {
+        saveQueue(nextQueue);
+    }
+
+    return removed;
+}
+
 // ─── SSE Broadcasting ────────────────────────────────────────────────
 
 /**
@@ -70,6 +91,7 @@ function saveQueue(queue) {
  */
 function broadcastOrQueue(eventType, data) {
     const event = {
+        id: createEventId(),
         type: eventType,
         data: data,
         timestamp: Date.now(),
@@ -152,6 +174,7 @@ function startTimer(id, config) {
         console.log(`[AutoPulse] Timer "${id}" fired! (pressure: ${pressureLevel}, interval: ${actualMinutes}min)`);
         broadcastOrQueue('timer_trigger', {
             timerId: id,
+            characterId: config.characterId ?? null,
             prompt: config.prompt || '',
             intervalMinutes: actualMinutes,
             pressureLevel: pressureLevel,
@@ -251,6 +274,7 @@ function startScheduledTaskChecker() {
                 broadcastOrQueue('scheduled_task_trigger', {
                     taskId: id,
                     taskName: task.name,
+                    characterId: task.characterId ?? null,
                     prompt: task.prompt || '',
                 });
 
@@ -328,6 +352,7 @@ async function init(router) {
             intervalMinutes: Number(intervalMinutes) || 30,
             prompt: prompt || '',
             enabled: enabled !== false,
+            characterId: req.body.characterId ?? null,
             pressureLevel: Number(req.body.pressureLevel) || 0,
             pressureMultipliers: req.body.pressureMultipliers || null,
             updatedAt: Date.now(),
@@ -389,6 +414,7 @@ async function init(router) {
             weekday: weekday !== undefined ? Number(weekday) : 1,
             date: date || null,
             prompt: prompt || '',
+            characterId: req.body.characterId ?? null,
             enabled: enabled !== false,
             updatedAt: Date.now(),
         };
@@ -422,6 +448,11 @@ async function init(router) {
     router.delete('/queue', (req, res) => {
         saveQueue([]);
         res.json({ success: true });
+    });
+
+    router.post('/queue/ack', (req, res) => {
+        const removed = acknowledgeQueueEvents(req.body?.eventIds);
+        res.json({ success: true, removed });
     });
 
     // ─── Polling Endpoint ────────────────────────────────────
