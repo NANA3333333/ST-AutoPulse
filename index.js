@@ -112,6 +112,17 @@ function getCurrentCharacterId(ctx = SillyTavern.getContext()) {
     return hasActiveCharacter(ctx) ? String(ctx.characterId) : null;
 }
 
+function getJealousyTestCharacterId(ctx = SillyTavern.getContext()) {
+    const settings = getSettings();
+    const selectedChars = (settings.jealousyCharacters || []).map(String);
+
+    if (selectedChars.length > 0) {
+        return selectedChars[0];
+    }
+
+    return getCurrentCharacterId(ctx);
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 function getSettings() {
@@ -1379,12 +1390,13 @@ async function initExtension() {
 
     $('#autopulse_test_jealousy').on('click', () => {
         const ctx = SillyTavern.getContext();
-        const charId = ctx.characterId;
-        if (!hasActiveCharacter(ctx)) {
-            toastr.warning('请先打开一个角色的聊天', 'AutoPulse');
+        const charId = getJealousyTestCharacterId(ctx);
+        if (!charId) {
+            toastr.warning('请先选择一个嫉妒角色，或打开一个角色聊天', 'AutoPulse');
             return;
         }
-        toastr.info('正在生成吃醋消息（无视概率和延时）...', 'AutoPulse 测试');
+        const characterName = ctx.characters?.[charId]?.name || '角色';
+        toastr.info(`正在测试 ${characterName} 的嫉妒弹窗...`, 'AutoPulse 测试');
         generateJealousyMessage(charId);
     });
 
