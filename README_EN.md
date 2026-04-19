@@ -1,5 +1,15 @@
 # ST-AutoPulse
 
+## Update Notes (2026-04-19)
+
+- Fixed duplicate replay from the offline queue. Processed events are now acknowledged by `eventId` and removed safely.
+- Fixed timer and scheduled-task events being delivered to the wrong character chat by attaching `characterId` to server events and validating it on the frontend.
+- Fixed jealousy generation losing the original character context after chat switching by caching recent per-character conversation context.
+- Fixed pressure-system state drifting out of sync between the frontend UI and the server timer state.
+- Fixed independent API config save failures caused by missing request headers.
+- Improved independent API endpoint compatibility by auto-normalizing common OpenAI-compatible base URLs.
+- Fixed `Test Jealousy` reading stale chat context; it now reads the currently opened character chat at click time.
+
 [中文说明](README.md) | English Documentation
 
 An extension for SillyTavern that allows characters to **proactively** send messages to you.
