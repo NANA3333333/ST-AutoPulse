@@ -143,7 +143,7 @@ function updateTimerState(id, patch) {
 function startTimer(id, config) {
     // Clear existing timer if any
     if (activeTimers.has(id)) {
-        clearInterval(activeTimers.get(id));
+        clearTimeout(activeTimers.get(id));
         activeTimers.delete(id);
     }
 
@@ -152,43 +152,55 @@ function startTimer(id, config) {
         return;
     }
 
-    // Apply pressure multiplier for dynamic intervals
     const baseMinutes = config.intervalMinutes || 30;
-    const pressureLevel = config.pressureLevel || 0;
     const multipliers = config.pressureMultipliers || DEFAULT_PRESSURE_MULTIPLIERS;
-    const multiplier = multipliers[Math.min(pressureLevel, multipliers.length - 1)] || 1.0;
-    const actualMinutes = Math.max(1, Math.round(baseMinutes * multiplier));
-    const intervalMs = actualMinutes * 60 * 1000;
-    const nextTriggerAt = Date.now() + intervalMs;
+    const maxPressureLevel = Number(config.pressureMaxLevel) || 4;
+    let pressureLevel = Number(config.pressureLevel) || 0;
 
-    updateTimerState(id, {
-        pressureLevel,
-        pressureMultipliers: multipliers,
-        actualIntervalMinutes: actualMinutes,
-        intervalMs,
-        startedAt: Date.now(),
-        nextTriggerAt,
-    });
+    const scheduleNext = () => {
+        const multiplier = multipliers[Math.min(pressureLevel, multipliers.length - 1)] || 1.0;
+        const actualMinutes = Math.max(1, Math.round(baseMinutes * multiplier));
+        const intervalMs = actualMinutes * 60 * 1000;
+        const nextTriggerAt = Date.now() + intervalMs;
 
-    const timer = setInterval(() => {
-        console.log(`[AutoPulse] Timer "${id}" fired! (pressure: ${pressureLevel}, interval: ${actualMinutes}min)`);
-        broadcastOrQueue('timer_trigger', {
-            timerId: id,
-            characterId: config.characterId ?? null,
-            prompt: config.prompt || '',
-            intervalMinutes: actualMinutes,
-            pressureLevel: pressureLevel,
-        });
         updateTimerState(id, {
-            lastTriggeredAt: Date.now(),
-            nextTriggerAt: Date.now() + intervalMs,
+            pressureLevel,
+            pressureMaxLevel: maxPressureLevel,
+            pressureMultipliers: multipliers,
             actualIntervalMinutes: actualMinutes,
             intervalMs,
+            startedAt: Date.now(),
+            nextTriggerAt,
         });
-    }, intervalMs);
 
-    activeTimers.set(id, timer);
-    console.log(`[AutoPulse] Timer "${id}" started, base: ${baseMinutes}min, pressure: ${pressureLevel}, actual: ${actualMinutes}min`);
+        const timer = setTimeout(() => {
+            console.log(`[AutoPulse] Timer "${id}" fired! (pressure: ${pressureLevel}, interval: ${actualMinutes}min)`);
+            const firedPressureLevel = pressureLevel;
+
+            broadcastOrQueue('timer_trigger', {
+                timerId: id,
+                characterId: config.characterId ?? null,
+                prompt: config.prompt || '',
+                intervalMinutes: actualMinutes,
+                pressureLevel: firedPressureLevel,
+            });
+
+            pressureLevel = Math.min(maxPressureLevel, pressureLevel + 1);
+            updateTimerState(id, {
+                lastTriggeredAt: Date.now(),
+                pressureLevel,
+                actualIntervalMinutes: actualMinutes,
+                intervalMs,
+            });
+
+            scheduleNext();
+        }, intervalMs);
+
+        activeTimers.set(id, timer);
+        console.log(`[AutoPulse] Timer "${id}" scheduled, base: ${baseMinutes}min, pressure: ${pressureLevel}, actual: ${actualMinutes}min`);
+    };
+
+    scheduleNext();
 }
 
 /**
@@ -354,6 +366,7 @@ async function init(router) {
             enabled: enabled !== false,
             characterId: req.body.characterId ?? null,
             pressureLevel: Number(req.body.pressureLevel) || 0,
+            pressureMaxLevel: Number(req.body.pressureMaxLevel) || 4,
             pressureMultipliers: req.body.pressureMultipliers || null,
             updatedAt: Date.now(),
         };

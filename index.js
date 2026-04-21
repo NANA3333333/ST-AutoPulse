@@ -316,6 +316,25 @@ function getEventTargetCharacterId(event) {
     return event?.data?.characterId != null ? String(event.data.characterId) : null;
 }
 
+function getPressureEventKey(event) {
+    const targetCharacterId = getEventTargetCharacterId(event) || 'current';
+    if (event.type === 'timer_trigger') {
+        return `timer:${targetCharacterId}:${event.data?.timerId || 'default'}`;
+    }
+    return `${event.type || 'event'}:${targetCharacterId}`;
+}
+
+function shouldSynthesizeOfflinePressure(event, groupedPressureLevels) {
+    if (event.type !== 'timer_trigger') {
+        return false;
+    }
+    const levels = groupedPressureLevels.get(getPressureEventKey(event)) || [];
+    if (levels.length <= 1) {
+        return false;
+    }
+    return levels.every(level => level === levels[0]);
+}
+
 function snapshotCurrentCharacterContext(ctx = SillyTavern.getContext()) {
     const characterId = getCurrentCharacterId(ctx);
     if (!characterId) {
@@ -773,6 +792,23 @@ async function processOfflineQueue() {
         toastr.info(`有 ${queue.length} 条离线消息待处理`, 'AutoPulse');
 
         const processedEventIds = [];
+        const groupedPressureLevels = new Map();
+        const replayPressureCounts = new Map();
+
+        for (const event of queue) {
+            if (event.type !== 'timer_trigger') {
+                continue;
+            }
+            const currentCharacterId = getCurrentCharacterId(ctx);
+            const targetCharacterId = getEventTargetCharacterId(event);
+            if (targetCharacterId && currentCharacterId && targetCharacterId !== currentCharacterId) {
+                continue;
+            }
+            const key = getPressureEventKey(event);
+            const levels = groupedPressureLevels.get(key) || [];
+            levels.push(Number.isFinite(Number(event.data?.pressureLevel)) ? Number(event.data.pressureLevel) : 0);
+            groupedPressureLevels.set(key, levels);
+        }
 
         for (const event of queue) {
             const currentCharacterId = getCurrentCharacterId(ctx);
@@ -788,9 +824,16 @@ async function processOfflineQueue() {
 
             // Wait a bit between messages to avoid rate limiting
             await new Promise(resolve => setTimeout(resolve, 2000));
+            const pressureKey = getPressureEventKey(event);
+            const replayIndex = replayPressureCounts.get(pressureKey) || 0;
+            replayPressureCounts.set(pressureKey, replayIndex + 1);
+            const basePressureLevel = Number.isFinite(Number(event.data?.pressureLevel)) ? Number(event.data.pressureLevel) : 0;
+            const replayPressureLevel = shouldSynthesizeOfflinePressure(event, groupedPressureLevels)
+                ? Math.min(settings.pressureMaxLevel || 4, basePressureLevel + replayIndex)
+                : basePressureLevel;
             const handled = await handleTrigger(prompt, source, {
                 eventTimestamp: event.timestamp,
-                pressureLevel: event.data?.pressureLevel,
+                pressureLevel: replayPressureLevel,
                 suppressPressureEscalation: true,
             });
             if (!handled) {
@@ -825,6 +868,7 @@ async function syncTimerToServer() {
             prompt: settings.prompt,
             enabled: settings.enabled,
             pressureLevel: settings.pressureEnabled ? pressureLevel : 0,
+            pressureMaxLevel: settings.pressureMaxLevel || 4,
         });
         console.log(`[AutoPulse] Timer synced to server: ${settings.enabled ? 'ON' : 'OFF'}, interval: ${settings.intervalMinutes}min, pressure: ${pressureLevel}`);
         updateNextTriggerTime();
