@@ -312,6 +312,46 @@ async function acknowledgeQueueEvents(eventIds) {
     await pluginRequest('/queue/ack', 'POST', { eventIds });
 }
 
+function getEventTargetCharacterId(event) {
+    return event?.data?.characterId != null ? String(event.data.characterId) : null;
+}
+
+function getEventCoalesceKey(event) {
+    const targetCharacterId = getEventTargetCharacterId(event) || 'current';
+    if (event.type === 'timer_trigger') {
+        return `timer:${targetCharacterId}:${event.data?.timerId || 'default'}`;
+    }
+    if (event.type === 'scheduled_task_trigger') {
+        return `task:${targetCharacterId}:${event.data?.taskId || event.data?.taskName || 'default'}`;
+    }
+    return `${event.type || 'event'}:${targetCharacterId}:${event.id || event.timestamp || Math.random()}`;
+}
+
+function coalesceEventsForCurrentChat(events, ctx = SillyTavern.getContext()) {
+    const currentCharacterId = getCurrentCharacterId(ctx);
+    const latestByKey = new Map();
+    const supersededIds = [];
+
+    for (const event of events || []) {
+        const targetCharacterId = getEventTargetCharacterId(event);
+        if (targetCharacterId && currentCharacterId && targetCharacterId !== currentCharacterId) {
+            continue;
+        }
+
+        const key = getEventCoalesceKey(event);
+        const previous = latestByKey.get(key);
+        if (previous?.id) {
+            supersededIds.push(previous.id);
+        }
+        latestByKey.set(key, event);
+    }
+
+    return {
+        eventsToProcess: [...latestByKey.values()],
+        supersededIds,
+    };
+}
+
 function snapshotCurrentCharacterContext(ctx = SillyTavern.getContext()) {
     const characterId = getCurrentCharacterId(ctx);
     if (!characterId) {
@@ -430,9 +470,15 @@ async function pollForEvents() {
         if (response.events && response.events.length > 0) {
             console.log(`[AutoPulse] Received ${response.events.length} event(s) from server`);
 
-            for (const event of response.events) {
+            const { eventsToProcess, supersededIds } = coalesceEventsForCurrentChat(response.events, ctx);
+            if (supersededIds.length > 0) {
+                await acknowledgeQueueEvents(supersededIds);
+                console.log(`[AutoPulse] Dropped ${supersededIds.length} superseded pending event(s)`);
+            }
+
+            for (const event of eventsToProcess) {
                 const currentCharacterId = getCurrentCharacterId(ctx);
-                const targetCharacterId = event.data?.characterId != null ? String(event.data.characterId) : null;
+                const targetCharacterId = getEventTargetCharacterId(event);
 
                 if (targetCharacterId && currentCharacterId && targetCharacterId !== currentCharacterId) {
                     console.log(`[AutoPulse] Deferring event ${event.id} for character ${targetCharacterId}; current chat is ${currentCharacterId}`);
@@ -745,14 +791,17 @@ async function processOfflineQueue() {
         const queue = await pluginRequest('/queue');
         if (!queue || queue.length === 0) return;
 
-        console.log(`[AutoPulse] Processing ${queue.length} queued event(s)...`);
-        toastr.info(`有 ${queue.length} 条离线消息待处理`, 'AutoPulse');
+        const { eventsToProcess, supersededIds } = coalesceEventsForCurrentChat(queue, ctx);
+        if (eventsToProcess.length === 0) return;
 
-        const processedEventIds = [];
+        console.log(`[AutoPulse] Processing ${eventsToProcess.length} queued event(s), dropping ${supersededIds.length} superseded event(s)...`);
+        toastr.info(`有 ${eventsToProcess.length} 条离线消息待处理`, 'AutoPulse');
 
-        for (const event of queue) {
+        const processedEventIds = [...supersededIds];
+
+        for (const event of eventsToProcess) {
             const currentCharacterId = getCurrentCharacterId(ctx);
-            const targetCharacterId = event.data?.characterId != null ? String(event.data.characterId) : null;
+            const targetCharacterId = getEventTargetCharacterId(event);
             if (targetCharacterId && currentCharacterId && targetCharacterId !== currentCharacterId) {
                 continue;
             }
