@@ -316,42 +316,6 @@ function getEventTargetCharacterId(event) {
     return event?.data?.characterId != null ? String(event.data.characterId) : null;
 }
 
-function getEventCoalesceKey(event) {
-    const targetCharacterId = getEventTargetCharacterId(event) || 'current';
-    if (event.type === 'timer_trigger') {
-        return `timer:${targetCharacterId}:${event.data?.timerId || 'default'}`;
-    }
-    if (event.type === 'scheduled_task_trigger') {
-        return `task:${targetCharacterId}:${event.data?.taskId || event.data?.taskName || 'default'}`;
-    }
-    return `${event.type || 'event'}:${targetCharacterId}:${event.id || event.timestamp || Math.random()}`;
-}
-
-function coalesceEventsForCurrentChat(events, ctx = SillyTavern.getContext()) {
-    const currentCharacterId = getCurrentCharacterId(ctx);
-    const latestByKey = new Map();
-    const supersededIds = [];
-
-    for (const event of events || []) {
-        const targetCharacterId = getEventTargetCharacterId(event);
-        if (targetCharacterId && currentCharacterId && targetCharacterId !== currentCharacterId) {
-            continue;
-        }
-
-        const key = getEventCoalesceKey(event);
-        const previous = latestByKey.get(key);
-        if (previous?.id) {
-            supersededIds.push(previous.id);
-        }
-        latestByKey.set(key, event);
-    }
-
-    return {
-        eventsToProcess: [...latestByKey.values()],
-        supersededIds,
-    };
-}
-
 function snapshotCurrentCharacterContext(ctx = SillyTavern.getContext()) {
     const characterId = getCurrentCharacterId(ctx);
     if (!characterId) {
@@ -470,13 +434,7 @@ async function pollForEvents() {
         if (response.events && response.events.length > 0) {
             console.log(`[AutoPulse] Received ${response.events.length} event(s) from server`);
 
-            const { eventsToProcess, supersededIds } = coalesceEventsForCurrentChat(response.events, ctx);
-            if (supersededIds.length > 0) {
-                await acknowledgeQueueEvents(supersededIds);
-                console.log(`[AutoPulse] Dropped ${supersededIds.length} superseded pending event(s)`);
-            }
-
-            for (const event of eventsToProcess) {
+            for (const event of response.events) {
                 const currentCharacterId = getCurrentCharacterId(ctx);
                 const targetCharacterId = getEventTargetCharacterId(event);
 
@@ -489,11 +447,19 @@ async function pollForEvents() {
                 if (event.type === 'timer_trigger') {
                     const data = event.data;
                     console.log('[AutoPulse] Timer triggered:', data);
-                    handled = await handleTrigger(data.prompt, `timer_trigger:${data.intervalMinutes}`);
+                    handled = await handleTrigger(data.prompt, `timer_trigger:${data.intervalMinutes}`, {
+                        eventTimestamp: event.timestamp,
+                        pressureLevel: data.pressureLevel,
+                        suppressPressureEscalation: true,
+                    });
                 } else if (event.type === 'scheduled_task_trigger') {
                     const data = event.data;
                     console.log('[AutoPulse] Scheduled task triggered:', data);
-                    handled = await handleTrigger(data.prompt, `scheduled_task:${data.taskName}`);
+                    handled = await handleTrigger(data.prompt, `scheduled_task:${data.taskName}`, {
+                        eventTimestamp: event.timestamp,
+                        pressureLevel: data.pressureLevel,
+                        suppressPressureEscalation: true,
+                    });
                 }
 
                 if (handled && event.id) {
@@ -560,8 +526,9 @@ async function callGenerateQuietPrompt(prompt, options = {}) {
  * Integrates pressure system for emotional context.
  * @param {string} customPrompt Custom prompt override
  * @param {string} source Description of what triggered this
+ * @param {{eventTimestamp?: number, pressureLevel?: number, suppressPressureEscalation?: boolean}} options
  */
-async function handleTrigger(customPrompt, source = '自动消息') {
+async function handleTrigger(customPrompt, source = '自动消息', options = {}) {
     if (isGenerating) {
         console.log('[AutoPulse] Already generating, skipping trigger');
         return false;
@@ -583,16 +550,25 @@ async function handleTrigger(customPrompt, source = '自动消息') {
 
     const settings = getSettings();
     let prompt = customPrompt || settings.prompt || DEFAULT_PROMPT;
+    const effectivePressureLevel = Number.isFinite(Number(options.pressureLevel))
+        ? Number(options.pressureLevel)
+        : pressureLevel;
+    const eventTimestamp = Number(options.eventTimestamp) || null;
+
+    if (eventTimestamp) {
+        const eventTime = new Date(eventTimestamp).toLocaleString();
+        prompt = `（系统提示：这是一条 AutoPulse 离线/后台定时消息，真实触发时间是 ${eventTime}。现在只是补发显示。请按真实触发时间理解角色等待时长，不要因为补发过程连续发生而推断用户额外失踪了很久。）\n${prompt}`;
+    }
 
     // Inject pressure emotion into prompt if pressure system is enabled
-    if (settings.pressureEnabled && pressureLevel > 0) {
-        const pressurePrompt = PRESSURE_PROMPTS[Math.min(pressureLevel, PRESSURE_PROMPTS.length - 1)] || '';
+    if (settings.pressureEnabled && effectivePressureLevel > 0) {
+        const pressurePrompt = PRESSURE_PROMPTS[Math.min(effectivePressureLevel, PRESSURE_PROMPTS.length - 1)] || '';
         prompt = pressurePrompt + prompt;
-        console.log(`[AutoPulse] Pressure level ${pressureLevel}, injecting emotional context`);
+        console.log(`[AutoPulse] Pressure level ${effectivePressureLevel}, injecting emotional context`);
     }
 
     isGenerating = true;
-    console.log(`[AutoPulse] Generating message (source: ${source}, pressure: ${pressureLevel})...`);
+    console.log(`[AutoPulse] Generating message (source: ${source}, pressure: ${effectivePressureLevel})...`);
 
     try {
         const result = await callGenerateQuietPrompt(prompt);
@@ -608,12 +584,14 @@ async function handleTrigger(customPrompt, source = '自动消息') {
             name: ctx.name2,
             is_user: false,
             mes: messageText,
+            send_date: eventTimestamp ? new Date(eventTimestamp).toISOString() : new Date().toISOString(),
             force_avatar: ctx.getThumbnailUrl('avatar', ctx.characters[ctx.characterId]?.avatar),
             extra: {
                 autopulse: true,
                 autopulse_source: source,
                 autopulse_timestamp: Date.now(),
-                autopulse_pressure: pressureLevel,
+                autopulse_event_timestamp: eventTimestamp,
+                autopulse_pressure: effectivePressureLevel,
             },
         };
 
@@ -637,7 +615,7 @@ async function handleTrigger(customPrompt, source = '自动消息') {
         }
 
         // Escalate pressure if enabled (user still hasn't replied)
-        if (settings.pressureEnabled) {
+        if (settings.pressureEnabled && !options.suppressPressureEscalation) {
             const maxLevel = settings.pressureMaxLevel || 4;
             if (pressureLevel < maxLevel) {
                 pressureLevel++;
@@ -791,15 +769,12 @@ async function processOfflineQueue() {
         const queue = await pluginRequest('/queue');
         if (!queue || queue.length === 0) return;
 
-        const { eventsToProcess, supersededIds } = coalesceEventsForCurrentChat(queue, ctx);
-        if (eventsToProcess.length === 0) return;
+        console.log(`[AutoPulse] Processing ${queue.length} queued event(s)...`);
+        toastr.info(`有 ${queue.length} 条离线消息待处理`, 'AutoPulse');
 
-        console.log(`[AutoPulse] Processing ${eventsToProcess.length} queued event(s), dropping ${supersededIds.length} superseded event(s)...`);
-        toastr.info(`有 ${eventsToProcess.length} 条离线消息待处理`, 'AutoPulse');
+        const processedEventIds = [];
 
-        const processedEventIds = [...supersededIds];
-
-        for (const event of eventsToProcess) {
+        for (const event of queue) {
             const currentCharacterId = getCurrentCharacterId(ctx);
             const targetCharacterId = getEventTargetCharacterId(event);
             if (targetCharacterId && currentCharacterId && targetCharacterId !== currentCharacterId) {
@@ -813,7 +788,11 @@ async function processOfflineQueue() {
 
             // Wait a bit between messages to avoid rate limiting
             await new Promise(resolve => setTimeout(resolve, 2000));
-            const handled = await handleTrigger(prompt, source);
+            const handled = await handleTrigger(prompt, source, {
+                eventTimestamp: event.timestamp,
+                pressureLevel: event.data?.pressureLevel,
+                suppressPressureEscalation: true,
+            });
             if (!handled) {
                 console.warn('[AutoPulse] Stopping offline queue processing early to avoid dropping unhandled events.');
                 break;
